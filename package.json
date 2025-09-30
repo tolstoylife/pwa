@@ -11,6 +11,7 @@
   "dependencies": {
     "@astrojs/db": "^0.18.0",
     "astro": "^5.14.1",
+    "astrojs-service-worker": "^2.0.0",
     "sharp": "^0.33.5"
   }
 }
