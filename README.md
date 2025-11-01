@@ -1,1 +1,1 @@
-Splash site for tolstoy.life
+Splash site for tolstoy.life.
