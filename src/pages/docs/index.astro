@@ -1,11 +1,5 @@
 ---
-import { readFile } from 'fs/promises';
-import { fileURLToPath } from 'url';
-import { join, dirname } from 'path';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const htmlPath = join(__dirname, '../../data/docs-index.html');
-const html = await readFile(htmlPath, 'utf-8');
+import html from '../../data/docs-index.html?raw';
 
 return new Response(html, {
   headers: { 'Content-Type': 'text/html; charset=utf-8' },
