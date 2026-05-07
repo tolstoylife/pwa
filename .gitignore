@@ -4,6 +4,11 @@ dist/
 # generated types
 .astro/
 
+# synced docs (populated by scripts/sync-docs.sh at build time)
+src/content/docs/
+src/data/docs-index.html
+public/docs/
+
 # dependencies
 node_modules/
 
@@ -25,3 +30,5 @@ pnpm-debug.log*
 
 # Obsidian vault
 .obsidian
+
+.notebooklm/
