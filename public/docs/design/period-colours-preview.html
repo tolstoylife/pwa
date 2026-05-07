@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tolstoy Period Colours — Preview</title>
+  <style>
+    /* ── Tokens ───────────────────────────────────────────── */
+    :root {
+      --theme-darkest:  #495464;
+      --theme-dark:     #bbbfca;
+      --theme-mid:      #9ba3b4;
+      --theme-light:    #dddee8;
+      --theme-lightest: #f4f4f2;
+
+      /* Backgrounds — slightly warmed/coloured, moved closer to mid-tone */
+      --bg-light:        #dcd9d0;   /* warm parchment-grey, darkened from f4f4f2 */
+      --bg-light-surface:#e8e4db;   /* card surface, slightly lighter */
+      --bg-dark:         #272b30;   /* charcoal lifted from 1c1e23, faint slate tint */
+      --bg-dark-surface: #30353c;   /* card surface, cooler blue-grey hint */
+
+      --period-1: #4A7C59;   /* Green  — Youth & Formation    */
+      --period-2: #B83232;   /* Red    — The Soldier & Sinner */
+      --period-3: #B8960A;   /* Gold   — The Great Works      */
+      --period-4: #2362A0;   /* Blue   — The Prophet          */
+
+      /* Lighter tints for dark-bg node fills */
+      --period-1-tint: #7DBF92;
+      --period-2-tint: #E06868;
+      --period-3-tint: #DDB840;   /* richer gold tint */
+      --period-4-tint: #5DA0DC;   /* vivid sky blue tint */
+
+      --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --font-serif: Georgia, 'Times New Roman', serif;
+    }
+
+    /* ── Reset ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.5;
+      background: #1e2228;
+      color: #e8e9ec;
+    }
+
+    /* ── Layout ──────────────────────────────────────────── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+
+    h1 {
+      font-size: 1.05rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--theme-mid);
+      margin-bottom: 0.4rem;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--theme-dark);
+      margin-bottom: 3.5rem;
+      opacity: 0.6;
+    }
+
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--theme-mid);
+      opacity: 0.55;
+      margin-bottom: 1.2rem;
+      margin-top: 3.5rem;
+    }
+
+    /* ── Period cards ────────────────────────────────────── */
+    .period-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: #2a2d33;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .period-card {
+      background: var(--bg-dark-surface);
+      padding: 1.8rem 1.5rem 1.5rem;
+      position: relative;
+    }
+
+    .period-card::before {
+      content: '';
+      display: block;
+      height: 3px;
+      border-radius: 2px;
+      margin-bottom: 1.4rem;
+    }
+    .p1::before { background: var(--period-1); }
+    .p2::before { background: var(--period-2); }
+    .p3::before { background: var(--period-3); }
+    .p4::before { background: var(--period-4); }
+
+    .period-num {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.35;
+      margin-bottom: 0.35rem;
+    }
+    .period-name {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+      line-height: 1.25;
+    }
+    .p1 .period-name { color: var(--period-1-tint); }
+    .p2 .period-name { color: var(--period-2-tint); }
+    .p3 .period-name { color: var(--period-3-tint); }
+    .p4 .period-name { color: var(--period-4-tint); }
+
+    .period-years {
+      font-size: 0.78rem;
+      opacity: 0.4;
+      margin-bottom: 1rem;
+    }
+    .period-desc {
+      font-size: 0.82rem;
+      opacity: 0.6;
+      line-height: 1.55;
+    }
+
+    /* ── Swatch row ──────────────────────────────────────── */
+    .swatch-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .swatch {
+      flex: 1;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .swatch-block {
+      height: 56px;
+    }
+
+    .swatch-info {
+      background: var(--bg-dark-surface);
+      padding: 0.55rem 0.7rem;
+      font-size: 0.72rem;
+      line-height: 1.5;
+    }
+    .swatch-info strong {
+      display: block;
+      opacity: 0.9;
+      font-size: 0.78rem;
+    }
+    .swatch-info span {
+      opacity: 0.45;
+      font-family: monospace;
+    }
+
+    /* ── Two-theme preview ───────────────────────────────── */
+    .theme-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: #2a2d33;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .theme-panel {
+      padding: 2.5rem 2rem;
+    }
+
+    .theme-panel.light {
+      background: var(--bg-light);
+      color: var(--theme-darkest);
+    }
+    .theme-panel.dark {
+      background: var(--bg-dark);
+      color: var(--theme-light);
+    }
+
+    .theme-panel-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.4;
+      margin-bottom: 1.5rem;
+    }
+
+    .node-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .node {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .node-label {
+      font-size: 0.82rem;
+      opacity: 0.75;
+    }
+
+    .theme-panel.light .node { opacity: 0.9; }
+
+    /* light mode: use base colours */
+    .light .n1 { background: var(--period-1); }
+    .light .n2 { background: var(--period-2); }
+    .light .n3 { background: var(--period-3); }
+    .light .n4 { background: var(--period-4); }
+
+    /* dark mode: use tints */
+    .dark .n1 { background: var(--period-1-tint); }
+    .dark .n2 { background: var(--period-2-tint); }
+    .dark .n3 { background: var(--period-3-tint); }
+    .dark .n4 { background: var(--period-4-tint); }
+
+    /* ── Knowledge graph sketch ──────────────────────────── */
+    .graph-panel {
+      background: var(--bg-dark);
+      border-radius: 10px;
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+      min-height: 360px;
+    }
+
+    .graph-panel svg {
+      width: 100%;
+      height: 320px;
+    }
+
+    /* ── Timeline bar ────────────────────────────────────── */
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 0.6rem;
+    }
+
+    .timeline-seg {
+      height: 100%;
+    }
+
+    .timeline-labels {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    .timeline-item {
+      font-size: 0.72rem;
+      opacity: 0.5;
+    }
+
+    .timeline-item strong {
+      display: block;
+      opacity: 1.4;
+      font-size: 0.74rem;
+    }
+
+    .tl-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 0.4rem;
+      vertical-align: middle;
+    }
+
+    hr.divider {
+      border: none;
+      border-top: 1px solid #2a2d33;
+      margin: 3rem 0;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Tolstoy.life — Period Colours</h1>
+  <p class="subtitle">Design system research · Phase 1 · 2026-04-19</p>
+
+  <!-- ── Period cards ── -->
+  <p class="section-label">The Four Periods</p>
+  <div class="period-grid">
+    <div class="period-card p1">
+      <div class="period-num">Period I</div>
+      <div class="period-name">Youth &amp; Formation</div>
+      <div class="period-years">1828 – 1851</div>
+      <div class="period-desc">Childhood at Yasnaya Polyana, orphaned young, university dropout, restless moral self-examination.</div>
+    </div>
+    <div class="period-card p2">
+      <div class="period-num">Period II</div>
+      <div class="period-name">The Soldier &amp; Sinner</div>
+      <div class="period-years">1851 – 1862</div>
+      <div class="period-desc">Caucasus campaign, Sevastopol, Petersburg literary fame, gambling, dissipation, travel in Europe.</div>
+    </div>
+    <div class="period-card p3">
+      <div class="period-num">Period III</div>
+      <div class="period-name">The Great Works</div>
+      <div class="period-years">1862 – 1880</div>
+      <div class="period-desc">Marriage, Yasnaya Polyana school, War and Peace, Anna Karenina — world fame at its height.</div>
+    </div>
+    <div class="period-card p4">
+      <div class="period-num">Period IV</div>
+      <div class="period-name">The Prophet</div>
+      <div class="period-years">1880 – 1910</div>
+      <div class="period-desc">Conversion, renunciation, Christian anarchism, excommunication, the Tolstoyan movement, death at Astapovo.</div>
+    </div>
+  </div>
+
+  <!-- ── Swatches ── -->
+  <p class="section-label">Colour Swatches</p>
+  <div class="swatch-row">
+    <div class="swatch">
+      <div class="swatch-block" style="background:#4A7C59;"></div>
+      <div class="swatch-info"><strong>Forest Green</strong><span>#4A7C59</span></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-block" style="background:#7DBF92;"></div>
+      <div class="swatch-info"><strong>Green tint (dark bg)</strong><span>#7DBF92</span></div>
+    </div>
+    <div class="swatch" style="flex:0.15; background:#272b30; border-radius:6px;"></div>
+    <div class="swatch">
+      <div class="swatch-block" style="background:#B83232;"></div>
+      <div class="swatch-info"><strong>Crimson</strong><span>#B83232</span></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-block" style="background:#E06868;"></div>
+      <div class="swatch-info"><strong>Red tint (dark bg)</strong><span>#E06868</span></div>
+    </div>
+    <div class="swatch" style="flex:0.15; background:#272b30; border-radius:6px;"></div>
+    <div class="swatch">
+      <div class="swatch-block" style="background:#B8960A;"></div>
+      <div class="swatch-info"><strong>Gold</strong><span>#B8960A</span></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-block" style="background:#DDB840;"></div>
+      <div class="swatch-info"><strong>Gold tint (dark bg)</strong><span>#DDB840</span></div>
+    </div>
+    <div class="swatch" style="flex:0.15; background:#272b30; border-radius:6px;"></div>
+    <div class="swatch">
+      <div class="swatch-block" style="background:#2362A0;"></div>
+      <div class="swatch-info"><strong>Cobalt Blue</strong><span>#2362A0</span></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-block" style="background:#5DA0DC;"></div>
+      <div class="swatch-info"><strong>Blue tint (dark bg)</strong><span>#5DA0DC</span></div>
+    </div>
+  </div>
+
+  <!-- ── Theme preview ── -->
+  <p class="section-label">Period Colours on Light &amp; Dark Backgrounds</p>
+  <div class="theme-split">
+    <div class="theme-panel light">
+      <div class="theme-panel-label">Light — warm parchment-grey #dcd9d0</div>
+      <div class="node-row"><div class="node n1"></div><div class="node-label">I — Youth &amp; Formation</div></div>
+      <div class="node-row"><div class="node n2"></div><div class="node-label">II — The Soldier &amp; Sinner</div></div>
+      <div class="node-row"><div class="node n3"></div><div class="node-label">III — The Great Works</div></div>
+      <div class="node-row"><div class="node n4"></div><div class="node-label">IV — The Prophet</div></div>
+    </div>
+    <div class="theme-panel dark">
+      <div class="theme-panel-label">Dark — slate charcoal #272b30</div>
+      <div class="node-row"><div class="node n1"></div><div class="node-label">I — Youth &amp; Formation</div></div>
+      <div class="node-row"><div class="node n2"></div><div class="node-label">II — The Soldier &amp; Sinner</div></div>
+      <div class="node-row"><div class="node n3"></div><div class="node-label">III — The Great Works</div></div>
+      <div class="node-row"><div class="node n4"></div><div class="node-label">IV — The Prophet</div></div>
+    </div>
+  </div>
+
+  <!-- ── Knowledge graph sketch ── -->
+  <p class="section-label">Knowledge Graph — Node Colour Sketch</p>
+  <div class="graph-panel">
+    <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="glow1"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow2"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow3"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow4"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+
+      <!-- Edges -->
+      <!-- Period I cluster -->
+      <line x1="150" y1="150" x2="90" y2="90"  stroke="#7DBF92" stroke-width="1" stroke-opacity="0.25"/>
+      <line x1="150" y1="150" x2="80" y2="175" stroke="#7DBF92" stroke-width="1" stroke-opacity="0.25"/>
+      <line x1="150" y1="150" x2="130" y2="220" stroke="#7DBF92" stroke-width="1" stroke-opacity="0.25"/>
+      <!-- Cross-period edges -->
+      <line x1="150" y1="150" x2="350" y2="140" stroke="#555a63" stroke-width="1" stroke-opacity="0.3"/>
+      <line x1="350" y1="140" x2="560" y2="150" stroke="#555a63" stroke-width="1" stroke-opacity="0.3"/>
+      <line x1="560" y1="150" x2="760" y2="145" stroke="#555a63" stroke-width="1" stroke-opacity="0.3"/>
+      <!-- Period II cluster -->
+      <line x1="350" y1="140" x2="300" y2="75"  stroke="#E06868" stroke-width="1" stroke-opacity="0.25"/>
+      <line x1="350" y1="140" x2="410" y2="80"  stroke="#E06868" stroke-width="1" stroke-opacity="0.25"/>
+      <line x1="350" y1="140" x2="380" y2="210" stroke="#E06868" stroke-width="1" stroke-opacity="0.25"/>
+      <!-- Period III cluster -->
+      <line x1="560" y1="150" x2="510" y2="75"  stroke="#DDB840" stroke-width="1" stroke-opacity="0.25"/>
+      <line x1="560" y1="150" x2="620" y2="85"  stroke="#DDB840" stroke-width="1" stroke-opacity="0.25"/>
+      <line x1="560" y1="150" x2="535" y2="225" stroke="#DDB840" stroke-width="1" stroke-opacity="0.25"/>
+      <line x1="560" y1="150" x2="610" y2="220" stroke="#DDB840" stroke-width="1" stroke-opacity="0.25"/>
+      <!-- Period IV cluster -->
+      <line x1="760" y1="145" x2="710" y2="75"  stroke="#5DA0DC" stroke-width="1" stroke-opacity="0.25"/>
+      <line x1="760" y1="145" x2="820" y2="90"  stroke="#5DA0DC" stroke-width="1" stroke-opacity="0.25"/>
+      <line x1="760" y1="145" x2="800" y2="210" stroke="#5DA0DC" stroke-width="1" stroke-opacity="0.25"/>
+
+      <!-- Period I satellite nodes -->
+      <circle cx="90"  cy="90"  r="6" fill="#7DBF92" opacity="0.7"/>
+      <circle cx="80"  cy="175" r="5" fill="#7DBF92" opacity="0.6"/>
+      <circle cx="130" cy="220" r="7" fill="#7DBF92" opacity="0.7"/>
+      <!-- Period I hub -->
+      <circle cx="150" cy="150" r="18" fill="#30353c" stroke="#7DBF92" stroke-width="2" filter="url(#glow1)"/>
+      <circle cx="150" cy="150" r="6"  fill="#7DBF92"/>
+      <text x="150" y="178" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#7DBF92" opacity="0.75">Youth</text>
+
+      <!-- Period II satellite nodes -->
+      <circle cx="300" cy="75"  r="5" fill="#E06868" opacity="0.7"/>
+      <circle cx="410" cy="80"  r="7" fill="#E06868" opacity="0.7"/>
+      <circle cx="380" cy="210" r="5" fill="#E06868" opacity="0.6"/>
+      <!-- Period II hub -->
+      <circle cx="350" cy="140" r="18" fill="#30353c" stroke="#E06868" stroke-width="2" filter="url(#glow2)"/>
+      <circle cx="350" cy="140" r="6"  fill="#E06868"/>
+      <text x="350" y="168" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#E06868" opacity="0.75">Soldier</text>
+
+      <!-- Period III satellite nodes -->
+      <circle cx="510" cy="75"  r="8" fill="#DDB840" opacity="0.75"/>
+      <circle cx="620" cy="85"  r="7" fill="#DDB840" opacity="0.7"/>
+      <circle cx="535" cy="225" r="5" fill="#DDB840" opacity="0.6"/>
+      <circle cx="610" cy="220" r="6" fill="#DDB840" opacity="0.65"/>
+      <!-- Period III hub (biggest — most works) -->
+      <circle cx="560" cy="150" r="22" fill="#30353c" stroke="#DDB840" stroke-width="2" filter="url(#glow3)"/>
+      <circle cx="560" cy="150" r="7"  fill="#DDB840"/>
+      <text x="560" y="182" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#DDB840" opacity="0.75">Great Works</text>
+
+      <!-- Period IV satellite nodes -->
+      <circle cx="710" cy="75"  r="6" fill="#5DA0DC" opacity="0.7"/>
+      <circle cx="820" cy="90"  r="5" fill="#5DA0DC" opacity="0.65"/>
+      <circle cx="800" cy="210" r="7" fill="#5DA0DC" opacity="0.7"/>
+      <!-- Period IV hub -->
+      <circle cx="760" cy="145" r="18" fill="#30353c" stroke="#5DA0DC" stroke-width="2" filter="url(#glow4)"/>
+      <circle cx="760" cy="145" r="6"  fill="#5DA0DC"/>
+      <text x="760" y="173" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#5DA0DC" opacity="0.75">Prophet</text>
+    </svg>
+  </div>
+
+  <!-- ── Timeline ── -->
+  <p class="section-label">Timeline Bar</p>
+  <div class="timeline">
+    <div class="timeline-seg" style="background:#4A7C59;"></div>
+    <div class="timeline-seg" style="background:#B83232;"></div>
+    <div class="timeline-seg" style="background:#B8960A;"></div>
+    <div class="timeline-seg" style="background:#2362A0;"></div>
+  </div>
+  <div class="timeline-labels">
+    <div class="timeline-item">
+      <strong><span class="tl-dot" style="background:#7DBF92;"></span>1828 – 1851</strong>
+      Youth &amp; Formation
+    </div>
+    <div class="timeline-item">
+      <strong><span class="tl-dot" style="background:#E06868;"></span>1851 – 1862</strong>
+      The Soldier &amp; Sinner
+    </div>
+    <div class="timeline-item">
+      <strong><span class="tl-dot" style="background:#DDB840;"></span>1862 – 1880</strong>
+      The Great Works
+    </div>
+    <div class="timeline-item">
+      <strong><span class="tl-dot" style="background:#5DA0DC;"></span>1880 – 1910</strong>
+      The Prophet
+    </div>
+  </div>
+
+  <hr class="divider">
+  <p style="font-size:0.72rem; opacity:0.3;">tolstoy.life design system · period-colours-preview.html · 2026-04-19</p>
+
+</div>
+</body>
+</html>

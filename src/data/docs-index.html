@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>docs — tolstoy.life</title>
+<style>
+:root {
+  --ink: #1e1a17;
+  --ink-soft: #4a4038;
+  --paper: #faf7f2;
+  --rule: #d9d1c5;
+  --accent: #6b4423;
+  --accent-soft: #8c6a4a;
+  --measure: 38rem;
+  --measure-wide: 52rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 150%; -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0; padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino,
+               "URW Palladio L", P052, Charter, Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  font-feature-settings: "kern", "liga", "onum";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ── */
+.site-header {
+  max-width: var(--measure-wide);
+  margin: 0 auto;
+  padding: 1.4rem 1.5rem 1rem;
+  display: flex;
+  align-items: baseline;
+  gap: 1.2rem;
+  border-bottom: 1px solid var(--rule);
+}
+.site-header a.home {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  text-decoration: none;
+  font-style: italic;
+  white-space: nowrap;
+}
+.site-header a.home:hover { color: var(--accent); }
+.breadcrumb {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.breadcrumb a { color: var(--ink-soft); text-decoration: none; }
+.breadcrumb a:hover { color: var(--accent); text-decoration: underline; }
+.breadcrumb span { color: var(--rule); margin: 0 0.3em; }
+
+header.doc-header {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2rem;
+  border-bottom: 1px solid var(--rule);
+}
+header.doc-header .eyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  font-style: italic;
+  margin: 0 0 0.8rem;
+}
+header.doc-header h1 {
+  font-size: 2.2rem;
+  line-height: 1.15;
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+header.doc-header .meta {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 0;
+  font-variant-numeric: oldstyle-nums;
+}
+
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 6rem;
+}
+
+/* ── Typography ── */
+h1 { font-size: 2.2rem; line-height: 1.15; margin: 0 0 1rem; font-weight: 600; letter-spacing: -0.012em; }
+h2 { font-size: 1.6rem; line-height: 1.25; margin: 3rem 0 0.4rem; font-weight: 600; letter-spacing: -0.005em; }
+h3 { font-size: 1.18rem; line-height: 1.3; margin: 2.4rem 0 0.6rem; font-weight: 600; }
+h4 { font-size: 1rem; font-weight: 600; margin: 1.6rem 0 0.4rem; }
+p { margin: 0 0 1.1rem; hyphens: auto; -webkit-hyphens: auto; }
+ol, ul { padding-left: 1.4rem; margin: 0 0 1.3rem; }
+li { margin-bottom: 0.55rem; }
+li > ol, li > ul { margin-top: 0.4rem; margin-bottom: 0.2rem; }
+strong { font-weight: 600; }
+em { font-style: italic; }
+a { color: var(--accent); text-decoration: underline;
+    text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { color: var(--ink); }
+blockquote {
+  margin: 1.4rem 0; padding: 0 0 0 1.2rem;
+  border-left: 2px solid var(--accent-soft);
+  color: var(--ink-soft); font-style: italic;
+}
+hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
+
+code, kbd, samp {
+  font-family: "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.88em;
+  background: rgba(107,68,35,0.07);
+  padding: 0.08em 0.34em;
+  border-radius: 2px;
+}
+pre {
+  background: rgba(107,68,35,0.05);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  margin: 0 0 1.4rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+pre code { background: none; padding: 0; font-size: inherit; }
+
+table {
+  width: 100%; border-collapse: collapse;
+  margin: 1.4rem 0 1.8rem; font-size: 0.94rem;
+}
+th, td {
+  text-align: left; padding: 0.6rem 0.8rem 0.6rem 0;
+  border-bottom: 1px solid var(--rule); vertical-align: top;
+}
+th {
+  font-weight: 600; font-size: 0.82rem;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--accent-soft); font-style: italic;
+  border-bottom: 1px solid var(--accent-soft);
+}
+
+/* ── Index page ── */
+.featured-section {
+  max-width: var(--measure-wide);
+  margin: 1rem auto 2.5rem;
+  padding: 0 1.5rem;
+}
+.featured-card {
+  display: block;
+  padding: 1.7rem 1.9rem;
+  background: rgba(107, 68, 35, 0.06);
+  border: 1px solid var(--accent-soft);
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color 0.15s, background 0.15s;
+}
+.featured-card:hover {
+  border-color: var(--accent);
+  background: rgba(107, 68, 35, 0.10);
+  color: var(--ink);
+}
+.featured-card .eyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  font-style: italic;
+  margin: 0 0 0.7rem;
+}
+.featured-card .card-title {
+  font-size: 1.42rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+}
+.featured-card .card-meta {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 0 0 0.85rem;
+}
+.featured-card .card-lede {
+  font-size: 0.97rem;
+  color: var(--ink);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.index-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.8rem;
+  margin: 0 0 2.5rem;
+}
+.index-card {
+  display: block;
+  padding: 1rem 1.1rem;
+  background: rgba(107,68,35,0.04);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color 0.15s, background 0.15s;
+}
+.index-card:hover {
+  border-color: var(--accent-soft);
+  background: rgba(107,68,35,0.07);
+  color: var(--ink);
+}
+.index-card .card-title {
+  font-size: 0.97rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  line-height: 1.3;
+}
+.index-card .card-meta {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+.index-card .card-lede {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 0.35rem 0 0;
+  line-height: 1.45;
+}
+
+.section-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  font-style: italic;
+  margin: 2.5rem 0 0.8rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+footer {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  font-style: italic;
+  text-align: center;
+}
+
+/* ── Annotations ── */
+mark.annotation {
+  background: rgba(107, 68, 35, 0.13);
+  border-bottom: 1.5px solid var(--accent-soft);
+  cursor: pointer;
+  border-radius: 1px;
+  padding: 0 1px;
+}
+mark.annotation:hover { background: rgba(107, 68, 35, 0.22); }
+
+#ann-popover {
+  position: fixed;
+  z-index: 1000;
+  background: var(--paper);
+  border: 1px solid var(--accent-soft);
+  border-radius: 4px;
+  box-shadow: 0 4px 18px rgba(30,26,23,0.13);
+  padding: 0.9rem 1rem;
+  width: 22rem;
+  display: none;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+#ann-popover .ann-quote {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 0 0 0.6rem;
+  border-left: 2px solid var(--accent-soft);
+  padding-left: 0.6rem;
+  line-height: 1.4;
+  max-height: 3.5rem;
+  overflow: hidden;
+}
+#ann-popover textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.5rem 0.6rem;
+  background: #fff;
+  color: var(--ink);
+  resize: vertical;
+  min-height: 4rem;
+  outline: none;
+}
+#ann-popover textarea:focus { border-color: var(--accent-soft); }
+#ann-popover .ann-actions {
+  display: flex; gap: 0.5rem; margin-top: 0.6rem; justify-content: flex-end;
+}
+#ann-popover button {
+  font-family: inherit; font-size: 0.82rem; padding: 0.3rem 0.75rem;
+  border-radius: 2px; cursor: pointer; border: 1px solid var(--rule);
+  background: var(--paper); color: var(--ink-soft);
+}
+#ann-popover button.primary {
+  background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
+}
+#ann-popover button.primary:hover { background: var(--ink); border-color: var(--ink); }
+#ann-popover button:not(.primary):hover { border-color: var(--accent-soft); color: var(--ink); }
+
+#ann-tooltip {
+  position: fixed; z-index: 999;
+  background: var(--ink); color: var(--paper);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 0.85rem; line-height: 1.5;
+  padding: 0.6rem 0.85rem; border-radius: 3px;
+  max-width: 22rem; box-shadow: 0 3px 12px rgba(30,26,23,0.18);
+  pointer-events: none; display: none; white-space: pre-wrap;
+}
+
+#ann-bar {
+  position: fixed; bottom: 1.2rem; right: 1.4rem;
+  display: none; gap: 0.5rem; z-index: 998;
+}
+#ann-bar button {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 0.82rem; padding: 0.4rem 0.9rem; border-radius: 2px;
+  cursor: pointer; border: 1px solid var(--accent-soft);
+  background: var(--paper); color: var(--ink-soft);
+  box-shadow: 0 2px 8px rgba(30,26,23,0.1);
+}
+#ann-bar button:hover { border-color: var(--accent); color: var(--ink); }
+#ann-bar button.danger { border-color: #c0392b55; color: #c0392b; }
+#ann-bar button.danger:hover { background: #c0392b; color: #fff; border-color: #c0392b; }
+</style>
+</head>
+<body>
+<div class="site-header">
+  <a class="home" href="/docs/">tolstoy.life / docs</a>
+</div>
+<header class="doc-header">
+  <p class="eyebrow">tolstoy.life</p>
+  <h1>Documentation</h1>
+  <p class="meta">Generated 26 April 2026, 14:22</p>
+</header>
+
+    <div class="featured-section">
+      <a class="featured-card" href="/docs/architecture/architecture-review.html">
+        <p class="eyebrow">Featured</p>
+        <div class="card-title">Deep research report — Tolstoy PWA local-first architecture</div>
+        <div class="card-meta">architecture · 26 Apr 2026</div>
+        <p class='card-lede'>The sync model has three independent pieces that people often conflate. Let me separate them.</p>
+      </a>
+    </div>
+<main>
+  <p style="color:var(--ink-soft);font-style:italic;margin-bottom:2rem">
+    Architecture, editorial principles, and technical specifications.
+    Tracked in git. Start a local server with <code>python3 serve.py</code>
+    from <code>docs/</code>.
+  </p>
+  
+    <p class="section-label">Architecture — System design, scalability, and operational context</p>
+    <div class="index-grid">
+      <a class="index-card" href="/docs/architecture/internal-operations">
+        <div class="card-title">Internal Operations — Tolstoy Research Platform</div>
+        <div class="card-meta">architecture · 25 Apr 2026</div>
+        <div class='card-lede'>Cost estimates, hardware specifications, and capacity planning details. Supplements `AGENTS.md` with operational context for anyone implemen…</div>
+      </a>
+      <a class="index-card" href="/docs/architecture/epub-a11y-w3c-review-2026-04-22">
+        <div class="card-title">EPUB 3.3 & Accessibility 1.1 — W3C Spec Review</div>
+        <div class="card-meta">architecture · 22 Apr 2026</div>
+        <div class='card-lede'>*Reviewed: 2026-04-22 | Scope: tolstoy.life e-reader, `tl` toolset, distributed EPUBs*</div>
+      </a>
+      <a class="index-card" href="/docs/architecture/lightrag-performance-report-2026-04-18">
+        <div class="card-title">LightRAG Performance Report — Mac Mini M4 24GB</div>
+        <div class="card-meta">architecture · 18 Apr 2026</div>
+        <div class='card-lede'>Report: 2026-04-18 (updated same day — second ingestion run with bge-m3 embedding model)</div>
+      </a>
+      <a class="index-card" href="/docs/architecture/scalability-deep-dive-2026-04-15">
+        <div class="card-title">Deep Dive: True Scale of a Complete Tolstoy Resource</div>
+        <div class="card-meta">architecture · 16 Apr 2026</div>
+        <div class='card-lede'>Context: Follows up on the initial scalability report of the same date. This analysis digs into the "connective tissue" — data categories th…</div>
+      </a>
+      <a class="index-card" href="/docs/architecture/wiki-rewrite-workflow-2026-04-15">
+        <div class="card-title">Wiki Rewrite Workflow at Scale</div>
+        <div class="card-meta">architecture · 15 Apr 2026</div>
+        <div class='card-lede'>Context: How do we keep 26,500+ wiki pages accurate and cross-referenced as new sources are ingested? The current approach (Claude reads eve…</div>
+      </a>
+    </div>
+    <p class="section-label">Editorial — Project principles, voice, and style</p>
+    <div class="index-grid">
+      <a class="index-card" href="/docs/editorial/editorial">
+        <div class="card-title">Editorial handbook — tolstoy.life</div>
+        <div class="card-meta">editorial · 26 Apr 2026</div>
+        <div class='card-lede'>This file describes how content for tolstoy.life is written: voice, what is included, what is excluded, and how to handle outside scrutiny. …</div>
+      </a>
+      <a class="index-card" href="/docs/editorial/conventions">
+        <div class="card-title">Documentation conventions — tolstoy.life</div>
+        <div class="card-meta">editorial · 26 Apr 2026</div>
+        <div class='card-lede'>How internal project documentation in `docs/` and `_generated/` is maintained over time. Complements `editorial.md`, which covers content st…</div>
+      </a>
+    </div>
+    <p class="section-label">Design — Visual identity, period colours, and typographic system</p>
+    <div class="index-grid">
+      <a class="index-card" href="/docs/design/period-colours-preview.html">
+        <div class="card-title">Tolstoy Period Colours — Preview</div>
+        <div class="card-meta">design · 19 Apr 2026</div>
+        
+      </a>
+      <a class="index-card" href="/docs/design/period-colours-research">
+        <div class="card-title">Tolstoy Period Colours — Research & Proposal</div>
+        <div class="card-meta">design · 19 Apr 2026</div>
+        <div class='card-lede'>*Design system research. Phase 1: Four base colours for the four periods of Tolstoy's life.*</div>
+      </a>
+    </div>
+    <p class="section-label">PWA — E-reader, local-first architecture, and tl pipeline</p>
+    <div class="index-grid">
+      
+      <a class="index-card" href="/docs/pwa/tl-pipeline-integration">
+        <div class="card-title">Tolstoy e-reader: tl pipeline integration</div>
+        <div class="card-meta">pwa · 26 Apr 2026</div>
+        <div class='card-lede'>The PWA architecture depends on the `tl` build producing a few additional artifacts. This document specifies exactly what those are and how …</div>
+      </a>
+      <a class="index-card" href="/docs/pwa/yjs-schema-and-sync">
+        <div class="card-title">Tolstoy e-reader: Yjs schema and sync architecture</div>
+        <div class="card-meta">pwa · 24 Apr 2026</div>
+        <div class='card-lede'>This document specifies the concrete CRDT shape, the IndexedDB layout, and the sync-relay contract. It assumes the overall architecture from…</div>
+      </a>
+      <a class="index-card" href="/docs/pwa/wiki-integration">
+        <div class="card-title">Tolstoy e-reader: wiki integration</div>
+        <div class="card-meta">pwa · 20 Apr 2026</div>
+        <div class='card-lede'>This document specifies how the wiki layer (`website/src/wiki/`) participates in the local-first PWA. It sits alongside `local-first-archite…</div>
+      </a>
+      <a class="index-card" href="/docs/pwa/stage-1-implementation">
+        <div class="card-title">Tolstoy e-reader: Stage 1 implementation plan</div>
+        <div class="card-meta">pwa · 20 Apr 2026</div>
+        <div class='card-lede'>The first real local-first step. This stage does not introduce annotations, sync, or CRDTs. It introduces one capability: a user can choose …</div>
+      </a>
+      <a class="index-card" href="/docs/pwa/local-first-architecture">
+        <div class="card-title">Tolstoy e-reader: local-first PWA architecture</div>
+        <div class="card-meta">pwa · 20 Apr 2026</div>
+        <div class='card-lede'>A working architectural sketch for turning tolstoy.life into a true local-first e-reader, with W3C-compliant annotations, bookmarks, and opt…</div>
+      </a>
+    </div>
+</main>
+<footer>tolstoy.life · public documentation</footer>
+</body>
+</html>

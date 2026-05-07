@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tolstoy e-reader PWA: document index — tolstoy.life docs</title>
+<style>
+:root {
+  --ink: #1e1a17;
+  --ink-soft: #4a4038;
+  --paper: #faf7f2;
+  --rule: #d9d1c5;
+  --accent: #6b4423;
+  --accent-soft: #8c6a4a;
+  --measure: 38rem;
+  --measure-wide: 52rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 150%; -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0; padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino,
+               "URW Palladio L", P052, Charter, Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  font-feature-settings: "kern", "liga", "onum";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ── */
+.site-header {
+  max-width: var(--measure-wide);
+  margin: 0 auto;
+  padding: 1.4rem 1.5rem 1rem;
+  display: flex;
+  align-items: baseline;
+  gap: 1.2rem;
+  border-bottom: 1px solid var(--rule);
+}
+.site-header a.home {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  text-decoration: none;
+  font-style: italic;
+  white-space: nowrap;
+}
+.site-header a.home:hover { color: var(--accent); }
+.breadcrumb {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.breadcrumb a { color: var(--ink-soft); text-decoration: none; }
+.breadcrumb a:hover { color: var(--accent); text-decoration: underline; }
+.breadcrumb span { color: var(--rule); margin: 0 0.3em; }
+
+header.doc-header {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2rem;
+  border-bottom: 1px solid var(--rule);
+}
+header.doc-header .eyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  font-style: italic;
+  margin: 0 0 0.8rem;
+}
+header.doc-header h1 {
+  font-size: 2.2rem;
+  line-height: 1.15;
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+header.doc-header .meta {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 0;
+  font-variant-numeric: oldstyle-nums;
+}
+
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 6rem;
+}
+
+/* ── Typography ── */
+h1 { font-size: 2.2rem; line-height: 1.15; margin: 0 0 1rem; font-weight: 600; letter-spacing: -0.012em; }
+h2 { font-size: 1.6rem; line-height: 1.25; margin: 3rem 0 0.4rem; font-weight: 600; letter-spacing: -0.005em; }
+h3 { font-size: 1.18rem; line-height: 1.3; margin: 2.4rem 0 0.6rem; font-weight: 600; }
+h4 { font-size: 1rem; font-weight: 600; margin: 1.6rem 0 0.4rem; }
+p { margin: 0 0 1.1rem; hyphens: auto; -webkit-hyphens: auto; }
+ol, ul { padding-left: 1.4rem; margin: 0 0 1.3rem; }
+li { margin-bottom: 0.55rem; }
+li > ol, li > ul { margin-top: 0.4rem; margin-bottom: 0.2rem; }
+strong { font-weight: 600; }
+em { font-style: italic; }
+a { color: var(--accent); text-decoration: underline;
+    text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { color: var(--ink); }
+blockquote {
+  margin: 1.4rem 0; padding: 0 0 0 1.2rem;
+  border-left: 2px solid var(--accent-soft);
+  color: var(--ink-soft); font-style: italic;
+}
+hr { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
+
+code, kbd, samp {
+  font-family: "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.88em;
+  background: rgba(107,68,35,0.07);
+  padding: 0.08em 0.34em;
+  border-radius: 2px;
+}
+pre {
+  background: rgba(107,68,35,0.05);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  margin: 0 0 1.4rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+pre code { background: none; padding: 0; font-size: inherit; }
+
+table {
+  width: 100%; border-collapse: collapse;
+  margin: 1.4rem 0 1.8rem; font-size: 0.94rem;
+}
+th, td {
+  text-align: left; padding: 0.6rem 0.8rem 0.6rem 0;
+  border-bottom: 1px solid var(--rule); vertical-align: top;
+}
+th {
+  font-weight: 600; font-size: 0.82rem;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--accent-soft); font-style: italic;
+  border-bottom: 1px solid var(--accent-soft);
+}
+
+/* ── Index page ── */
+.featured-section {
+  max-width: var(--measure-wide);
+  margin: 1rem auto 2.5rem;
+  padding: 0 1.5rem;
+}
+.featured-card {
+  display: block;
+  padding: 1.7rem 1.9rem;
+  background: rgba(107, 68, 35, 0.06);
+  border: 1px solid var(--accent-soft);
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color 0.15s, background 0.15s;
+}
+.featured-card:hover {
+  border-color: var(--accent);
+  background: rgba(107, 68, 35, 0.10);
+  color: var(--ink);
+}
+.featured-card .eyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  font-style: italic;
+  margin: 0 0 0.7rem;
+}
+.featured-card .card-title {
+  font-size: 1.42rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+}
+.featured-card .card-meta {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 0 0 0.85rem;
+}
+.featured-card .card-lede {
+  font-size: 0.97rem;
+  color: var(--ink);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.index-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.8rem;
+  margin: 0 0 2.5rem;
+}
+.index-card {
+  display: block;
+  padding: 1rem 1.1rem;
+  background: rgba(107,68,35,0.04);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color 0.15s, background 0.15s;
+}
+.index-card:hover {
+  border-color: var(--accent-soft);
+  background: rgba(107,68,35,0.07);
+  color: var(--ink);
+}
+.index-card .card-title {
+  font-size: 0.97rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  line-height: 1.3;
+}
+.index-card .card-meta {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+.index-card .card-lede {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin: 0.35rem 0 0;
+  line-height: 1.45;
+}
+
+.section-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-soft);
+  font-style: italic;
+  margin: 2.5rem 0 0.8rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+footer {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  font-style: italic;
+  text-align: center;
+}
+
+/* ── Annotations ── */
+mark.annotation {
+  background: rgba(107, 68, 35, 0.13);
+  border-bottom: 1.5px solid var(--accent-soft);
+  cursor: pointer;
+  border-radius: 1px;
+  padding: 0 1px;
+}
+mark.annotation:hover { background: rgba(107, 68, 35, 0.22); }
+
+#ann-popover {
+  position: fixed;
+  z-index: 1000;
+  background: var(--paper);
+  border: 1px solid var(--accent-soft);
+  border-radius: 4px;
+  box-shadow: 0 4px 18px rgba(30,26,23,0.13);
+  padding: 0.9rem 1rem;
+  width: 22rem;
+  display: none;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+#ann-popover .ann-quote {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 0 0 0.6rem;
+  border-left: 2px solid var(--accent-soft);
+  padding-left: 0.6rem;
+  line-height: 1.4;
+  max-height: 3.5rem;
+  overflow: hidden;
+}
+#ann-popover textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.5rem 0.6rem;
+  background: #fff;
+  color: var(--ink);
+  resize: vertical;
+  min-height: 4rem;
+  outline: none;
+}
+#ann-popover textarea:focus { border-color: var(--accent-soft); }
+#ann-popover .ann-actions {
+  display: flex; gap: 0.5rem; margin-top: 0.6rem; justify-content: flex-end;
+}
+#ann-popover button {
+  font-family: inherit; font-size: 0.82rem; padding: 0.3rem 0.75rem;
+  border-radius: 2px; cursor: pointer; border: 1px solid var(--rule);
+  background: var(--paper); color: var(--ink-soft);
+}
+#ann-popover button.primary {
+  background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
+}
+#ann-popover button.primary:hover { background: var(--ink); border-color: var(--ink); }
+#ann-popover button:not(.primary):hover { border-color: var(--accent-soft); color: var(--ink); }
+
+#ann-tooltip {
+  position: fixed; z-index: 999;
+  background: var(--ink); color: var(--paper);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 0.85rem; line-height: 1.5;
+  padding: 0.6rem 0.85rem; border-radius: 3px;
+  max-width: 22rem; box-shadow: 0 3px 12px rgba(30,26,23,0.18);
+  pointer-events: none; display: none; white-space: pre-wrap;
+}
+
+#ann-bar {
+  position: fixed; bottom: 1.2rem; right: 1.4rem;
+  display: none; gap: 0.5rem; z-index: 998;
+}
+#ann-bar button {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 0.82rem; padding: 0.4rem 0.9rem; border-radius: 2px;
+  cursor: pointer; border: 1px solid var(--accent-soft);
+  background: var(--paper); color: var(--ink-soft);
+  box-shadow: 0 2px 8px rgba(30,26,23,0.1);
+}
+#ann-bar button:hover { border-color: var(--accent); color: var(--ink); }
+#ann-bar button.danger { border-color: #c0392b55; color: #c0392b; }
+#ann-bar button.danger:hover { background: #c0392b; color: #fff; border-color: #c0392b; }
+</style>
+</head>
+<body>
+<div class="site-header">
+  <a class="home" href="/docs/">tolstoy.life / docs</a>
+  
+        <span class="breadcrumb">
+          <a href="/docs/">Index</a>
+          <span>›</span>
+          pwa
+        </span>
+</div>
+<header class="doc-header">
+  <p class="eyebrow">pwa</p>
+  <h1>Tolstoy e-reader PWA: document index</h1>
+  <p class="meta">Last modified 26 April 2026 · <a href="/pwa/README.md">view source</a></p>
+</header>
+<main>
+<h1>Tolstoy e-reader PWA: document index</h1>
+<p>Five design documents and three <code>/ultraplan</code> briefs, meant to be read together. Each design document stands alone but they're designed to form a coherent whole.</p>
+<h2>Reading order — design documents</h2>
+<ol>
+<li>
+<p><strong><code>local-first-architecture.md</code></strong> — The overall argument. What PWAs can do, why local-first fits this project, the four data layers (works, wiki articles, app shell, user annotations), Workbox adoption, and the staged roadmap (Stages 1–5). Start here. The other documents are the detailed specifications of individual sections of this one.</p>
+</li>
+<li>
+<p><strong><code>wiki-integration.md</code></strong> — How the wiki layer integrates with the works layer. Defines the <code>relatedWiki</code> per-work declaration, the shared deduplicated wiki cache, the bundled wiki-previews file for offline modal previews, and the GitHub deep-link contribution surface. Read this before or alongside the Stage 1 implementation document.</p>
+</li>
+<li>
+<p><strong><code>stage-1-implementation.md</code></strong> — A concrete implementation plan for the first real local-first step: letting users download individual works (and their referenced wiki articles) for offline reading, all served by a Workbox-based service worker. Scoped to be shippable on its own, with no dependencies on stages that haven't been built. This is the document most directly feedable into <code>/ultraplan</code>.</p>
+</li>
+<li>
+<p><strong><code>tl-pipeline-integration.md</code></strong> — What the Layer-1 scripted pipeline (CLAUDE.md, scaled architecture) must produce to make Stage 1 possible: deterministic content-addressed versioning (<code>v&lt;YYYY-MM-DD&gt;-&lt;hash6&gt;</code>), per-work asset manifests with <code>relatedWiki</code>, the wiki-previews bundle, the works.json index, and the explicit <code>chapterUri</code> frontmatter convention. A prerequisite for Stage 1.</p>
+</li>
+<li>
+<p><strong><code>yjs-schema-and-sync.md</code></strong> — The CRDT data model and sync relay design for Stage 4 and later. Specifies the Y.Doc shape, the per-annotation schema, the Cloudflare Worker + Durable Object relay (y-durableobjects pattern), the fragment-URL QR pairing flow with BIP-39 fallback, encryption-at-rest, the device list and revocation mechanism, and key rotation. Not needed for Stage 1, but referenced from it for the overall arc.</p>
+</li>
+</ol>
+<h2>Companion audit</h2>
+<ul>
+<li><strong><code>../architecture/architecture-review.html</code></strong> (2026-04-23) — A standalone, second-pass audit of the five design documents above. Ten parts covering: plain-English sync-model explainer, storage topology (what lives in Cache API vs IndexedDB), install UX across platforms (with CSS-only device mockups), sync-visibility UX (what the indicator should look like, accessibility-first), volume/bandwidth risk analysis, CRDT/QR sync problems, a critical build-pipeline cascade bug, hosting strategy (Netlify vs Cloudflare Pages vs R2 vs Bunny/Hetzner), build-minute economics, and a ranked priority-fix list. Open in a browser for the formatted reading experience. Session handoff with action items lives at <code>handoff-2026-04-23.md</code>.</li>
+</ul>
+<h2>Planning briefs (for <code>/ultraplan</code>)</h2>
+<p>The three briefs are derivative of the design documents — they re-state the design in a form suitable for <code>/ultraplan</code> and explicitly call out which decisions are resolved versus which are open questions for the planning session. They live in <code>_generated/PWA/briefs/</code> as staging artefacts:</p>
+<ul>
+<li><code>ultraplan-brief-01-sync.md</code> — Stage 4: Yjs schema and sync relay.</li>
+<li><code>ultraplan-brief-02-stage-1.md</code> — Stage 1: offline works (with wiki integration).</li>
+<li><code>ultraplan-brief-03-tl-integration.md</code> — Pipeline contract Stage 1 depends on.</li>
+</ul>
+<p>Recommended implementation order: brief 3 → brief 2 → brief 1.</p>
+<h2>Using these for <code>/ultraplan</code></h2>
+<p>When running <code>/ultraplan</code> to plan Stage 1 implementation, feed it the relevant design documents as context, and use the brief as the planning prompt:</p>
+<ul>
+<li><code>local-first-architecture.md</code> (for the overall design, especially §§1–3 and §§5.6–5.8)</li>
+<li><code>wiki-integration.md</code> (for the wiki integration the Stage 1 plan depends on)</li>
+<li><code>stage-1-implementation.md</code> (the actual plan, with the resolved Workbox routing and shared wiki cache design)</li>
+<li><code>tl-pipeline-integration.md</code> (the pipeline prerequisite — the deterministic version scheme, asset manifests, <code>relatedWiki</code>, wiki-previews bundle)</li>
+</ul>
+<p><code>yjs-schema-and-sync.md</code> can be left out of the Stage 1 plan; it's relevant only when Stage 4 comes around. Including it would widen the planning scope unnecessarily.</p>
+<p>An updated prompt for <code>/ultraplan</code> might look like:</p>
+<pre><code>/ultraplan Implement Stage 1 of the Tolstoy e-reader local-first PWA
+as specified in ./stage-1-implementation.md, with the
+wiki integration in ./wiki-integration.md and the
+build-pipeline contract in ./tl-pipeline-integration.md.
+The architectural context is in ./local-first-architecture.md.
+
+Focus on:
+
+1. The four Layer-1 generators
+   (generate-wiki-previews.py, generate-related-wiki.py,
+   generate-asset-manifests.py, generate-works-index.py) and the
+   shared canonical-JSON serialiser they use.
+2. The Workbox-based service worker — routing rules, the
+   downloaded-work matcher, the shared wiki cache strategy. Bundle
+   budget 30 KB gzipped.
+3. The download coordinator with wiki deduplication, progress
+   reporting, and cancellation.
+4. The wikilink modal preview component using the bundled previews
+   and falling through to the shared wiki cache.
+5. The settings storage panel including the shared wiki cache line
+   and the advanced &quot;Download the entire wiki&quot; toggle.
+
+Propose alternatives for the open questions in section 14 of
+stage-1-implementation.md and section 13 of
+tl-pipeline-integration.md. Include risk analysis for the
+iOS Safari storage eviction case.
+</code></pre>
+<p>The specific call-outs in the prompt (open questions, the iOS case) matter. Without them, <code>/ultraplan</code> might assume those are settled; with them, it knows to treat them as design decisions to work through.</p>
+<h2>Document status</h2>
+<p>All five design documents are drafts. They've been written to be internally consistent — a change in one would ripple to the others and should be made deliberately. Before committing to a plan via <code>/ultraplan</code>, a full read-through to catch drift is worthwhile.</p>
+<p>The three briefs are kept in sync with the design documents; if a design document changes, the corresponding brief should be re-checked.</p>
+<h2>Values alignment check</h2>
+<p>A concluding principle: every decision in these documents should pass the check, "does this honour the reader?"</p>
+<ul>
+<li>Offline availability honours the reader's device and connection.</li>
+<li>Local-first storage honours the reader's ownership.</li>
+<li>Standards-based annotations honour the reader's freedom to move their data.</li>
+<li>No accounts required honours the reader's privacy.</li>
+<li>The sync relay as a dumb pipe honours the reader's data sovereignty.</li>
+<li>Deliberate download choices honour the reader's device as a resource.</li>
+<li>The wiki travelling with the work it annotates honours the reader's offline experience as a complete one.</li>
+<li>The works themselves as public domain honour the reader's right to read freely.</li>
+</ul>
+<p>If a design decision doesn't pass this check, it's the wrong decision, and the architecture should be revised. The goal isn't to build a great e-reader in general. It's to build one that a reader of Tolstoy would recognise as made in the right spirit.</p>
+</main>
+<footer>tolstoy.life · public documentation</footer>
+
+<!-- Annotation UI -->
+<div id="ann-popover">
+  <div class="ann-quote" id="ann-quote"></div>
+  <textarea id="ann-text" placeholder="Your comment…" autocomplete="off"></textarea>
+  <div class="ann-actions">
+    <button id="ann-cancel">Cancel</button>
+    <button class="primary" id="ann-save">Save</button>
+  </div>
+</div>
+<div id="ann-tooltip"></div>
+<div id="ann-bar">
+  <button id="ann-export">Copy annotations</button>
+  <button class="danger" id="ann-clear">Clear all</button>
+</div>
+
+<script>
+(function() {
+  const DOC_KEY = 'docs/pwa/README';
+  const STORE_KEY = 'tolstoy_annotations';
+
+  // ── Storage ──────────────────────────────────────────────────────────────
+  function loadAll() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); }
+    catch { return {}; }
+  }
+  function saveAll(data) {
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  }
+  function loadDoc() {
+    return loadAll()[DOC_KEY] || [];
+  }
+  function saveDoc(anns) {
+    const all = loadAll();
+    if (anns.length === 0) delete all[DOC_KEY];
+    else all[DOC_KEY] = anns;
+    saveAll(all);
+  }
+
+  // ── Fuzzy text anchor ────────────────────────────────────────────────────
+  function getContext(range) {
+    const selected = range.toString();
+    const container = range.commonAncestorContainer;
+    const full = (container.textContent || container.innerText || '');
+    const start = full.indexOf(selected);
+    if (start === -1) return null;
+    return {
+      text: selected,
+      before: full.slice(Math.max(0, start - 30), start),
+      after: full.slice(start + selected.length, start + selected.length + 30)
+    };
+  }
+
+  // ── Rendering ────────────────────────────────────────────────────────────
+  function findAndWrap(ann, index) {
+    const main = document.querySelector('main');
+    if (!main) return;
+    const walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const idx = node.textContent.indexOf(ann.anchor.text);
+      if (idx === -1) continue;
+      const before10 = ann.anchor.before.slice(-10);
+      const after10 = ann.anchor.after.slice(0, 10);
+      const nodeText = node.textContent;
+      const contextOk = (!before10 || nodeText.slice(Math.max(0,idx-10), idx).includes(before10.slice(-4)))
+                     || (!after10  || nodeText.slice(idx + ann.anchor.text.length, idx + ann.anchor.text.length + 10).includes(after10.slice(0,4)));
+      if (!contextOk && ann.anchor.before && ann.anchor.after) continue;
+
+      const before = node.textContent.slice(0, idx);
+      const after = node.textContent.slice(idx + ann.anchor.text.length);
+      const mark = document.createElement('mark');
+      mark.className = 'annotation';
+      mark.dataset.index = index;
+      mark.textContent = ann.anchor.text;
+      const afterNode = document.createTextNode(after);
+      node.textContent = before;
+      node.parentNode.insertBefore(mark, node.nextSibling);
+      node.parentNode.insertBefore(afterNode, mark.nextSibling);
+      attachTooltip(mark, ann, index);
+      break;
+    }
+  }
+
+  function renderAll() {
+    document.querySelectorAll('mark.annotation').forEach(m => {
+      m.replaceWith(document.createTextNode(m.textContent));
+    });
+    const anns = loadDoc();
+    anns.forEach((ann, i) => findAndWrap(ann, i));
+    updateBar();
+  }
+
+  // ── Tooltip ──────────────────────────────────────────────────────────────
+  const tooltip = document.getElementById('ann-tooltip');
+
+  function attachTooltip(mark, ann, index) {
+    mark.addEventListener('mouseenter', e => {
+      tooltip.textContent = ann.comment;
+      tooltip.style.display = 'block';
+      positionTooltip(e);
+    });
+    mark.addEventListener('mousemove', positionTooltip);
+    mark.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+    mark.addEventListener('click', e => {
+      e.stopPropagation();
+      showDeleteConfirm(index, mark);
+    });
+  }
+
+  function positionTooltip(e) {
+    const pad = 12;
+    let x = e.clientX + pad;
+    let y = e.clientY - tooltip.offsetHeight - pad;
+    if (x + tooltip.offsetWidth > window.innerWidth - pad) x = e.clientX - tooltip.offsetWidth - pad;
+    if (y < pad) y = e.clientY + pad;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  }
+
+  // ── Delete confirm ────────────────────────────────────────────────────────
+  function showDeleteConfirm(index, mark) {
+    const anns = loadDoc();
+    const comment = anns[index] ? anns[index].comment : '';
+    if (confirm('Delete this annotation?\n\n"' + comment + '"')) {
+      anns.splice(index, 1);
+      saveDoc(anns);
+      renderAll();
+    }
+  }
+
+  // ── Popover ───────────────────────────────────────────────────────────────
+  const popover = document.getElementById('ann-popover');
+  const annText = document.getElementById('ann-text');
+  const annQuote = document.getElementById('ann-quote');
+  let pendingAnchor = null;
+  let pendingRange = null;
+
+  document.getElementById('ann-save').addEventListener('click', () => {
+    const comment = annText.value.trim();
+    if (!comment || !pendingAnchor) { hidePopover(); return; }
+    const anns = loadDoc();
+    anns.push({ anchor: pendingAnchor, comment, created: new Date().toISOString() });
+    saveDoc(anns);
+    hidePopover();
+    renderAll();
+  });
+
+  document.getElementById('ann-cancel').addEventListener('click', hidePopover);
+
+  annText.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) document.getElementById('ann-save').click();
+    if (e.key === 'Escape') hidePopover();
+  });
+
+  function hidePopover() {
+    popover.style.display = 'none';
+    annText.value = '';
+    pendingAnchor = null;
+    if (pendingRange) { window.getSelection().removeAllRanges(); pendingRange = null; }
+  }
+
+  function showPopover(x, y, anchor, range) {
+    pendingAnchor = anchor;
+    pendingRange = range;
+    annQuote.textContent = '"' + anchor.text.slice(0, 120) + (anchor.text.length > 120 ? '…' : '') + '"';
+    popover.style.display = 'block';
+    let px = x, py = y + 12;
+    if (px + popover.offsetWidth > window.innerWidth - 16) px = window.innerWidth - popover.offsetWidth - 16;
+    if (py + popover.offsetHeight > window.innerHeight - 16) py = y - popover.offsetHeight - 12;
+    popover.style.left = px + 'px';
+    popover.style.top = py + 'px';
+    setTimeout(() => annText.focus(), 50);
+  }
+
+  // ── Selection listener ────────────────────────────────────────────────────
+  document.addEventListener('mouseup', e => {
+    if (popover.contains(e.target)) return;
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    const text = sel.toString().trim();
+    if (text.length < 3) return;
+    const main = document.querySelector('main');
+    if (!main) return;
+    const range = sel.getRangeAt(0);
+    if (!main.contains(range.commonAncestorContainer)) return;
+    const anchor = getContext(range);
+    if (!anchor) return;
+    showPopover(e.clientX, e.clientY, anchor, range);
+  });
+
+  document.addEventListener('mousedown', e => {
+    if (!popover.contains(e.target)) hidePopover();
+  });
+
+  // ── Export / clear bar ────────────────────────────────────────────────────
+  const bar = document.getElementById('ann-bar');
+
+  function updateBar() {
+    const anns = loadDoc();
+    bar.style.display = anns.length > 0 ? 'flex' : 'none';
+  }
+
+  document.getElementById('ann-export').addEventListener('click', () => {
+    const anns = loadDoc();
+    if (!anns.length) return;
+    const lines = ['# Annotations — ' + DOC_KEY, ''];
+    anns.forEach((a, i) => {
+      lines.push('## ' + (i+1) + '. ' + a.created.slice(0,10));
+      lines.push('> ' + a.anchor.text);
+      lines.push('');
+      lines.push(a.comment);
+      lines.push('');
+    });
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      const btn = document.getElementById('ann-export');
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = orig; }, 1800);
+    });
+  });
+
+  document.getElementById('ann-clear').addEventListener('click', () => {
+    if (confirm('Delete all annotations on this page?')) {
+      saveDoc([]);
+      renderAll();
+    }
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  renderAll();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep research report — Tolstoy PWA local-first architecture</title>
+<style>
+  :root {
+    --ink: #1e1a17;
+    --ink-soft: #4a4038;
+    --paper: #faf7f2;
+    --rule: #d9d1c5;
+    --accent: #6b4423;
+    --accent-soft: #8c6a4a;
+    --measure: 38rem;
+    --measure-wide: 52rem;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    font-size: 125%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "URW Palladio L", P052, Charter, Georgia, "Times New Roman", serif;
+    font-size: 1.05rem;
+    line-height: 1.65;
+    font-feature-settings: "kern", "liga", "onum";
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  main {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+  }
+
+  header {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: 4rem 1.5rem 2rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  header .eyebrow {
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-soft);
+    font-style: italic;
+    margin: 0 0 0.8rem;
+  }
+
+  header h1 {
+    font-size: 2.4rem;
+    line-height: 1.15;
+    margin: 0 0 0.6rem;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    color: var(--ink);
+  }
+
+  header .subtitle {
+    font-size: 1.15rem;
+    line-height: 1.45;
+    margin: 0 0 1.4rem;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  header .meta {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin: 0;
+    font-variant-numeric: oldstyle-nums;
+  }
+
+  section {
+    margin: 3.5rem 0 0;
+  }
+
+  section:first-of-type { margin-top: 2rem; }
+
+  h2 {
+    font-size: 1.6rem;
+    line-height: 1.25;
+    margin: 0 0 0.4rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+  }
+
+  h2 .num {
+    display: block;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-soft);
+    font-style: italic;
+    font-weight: 400;
+    margin-bottom: 0.35rem;
+  }
+
+  h3 {
+    font-size: 1.18rem;
+    line-height: 1.3;
+    margin: 2.4rem 0 0.6rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 1.6rem 0 0.4rem;
+    color: var(--ink);
+  }
+
+  p {
+    margin: 0 0 1.1rem;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+  }
+
+  ol, ul {
+    padding-left: 1.4rem;
+    margin: 0 0 1.3rem;
+  }
+
+  li {
+    margin-bottom: 0.6rem;
+  }
+
+  li > ol, li > ul {
+    margin-top: 0.5rem;
+    margin-bottom: 0.2rem;
+  }
+
+  strong {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  em { font-style: italic; }
+
+  a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+  a:hover { color: var(--ink); }
+
+  code, kbd, samp {
+    font-family: "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+    font-size: 0.88em;
+    background: rgba(107, 68, 35, 0.07);
+    padding: 0.08em 0.34em;
+    border-radius: 2px;
+    color: var(--ink);
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--rule);
+    margin: 3rem 0;
+  }
+
+  blockquote {
+    margin: 1.4rem 0;
+    padding: 0 0 0 1.2rem;
+    border-left: 2px solid var(--accent-soft);
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  .lede {
+    font-size: 1.12rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    font-style: italic;
+    margin-bottom: 2rem;
+  }
+
+  .callout {
+    margin: 1.6rem 0;
+    padding: 1rem 1.3rem;
+    background: rgba(107, 68, 35, 0.05);
+    border-left: 3px solid var(--accent);
+    font-size: 0.97rem;
+  }
+
+  .callout p:last-child { margin-bottom: 0; }
+  .callout strong.tag {
+    display: block;
+    font-size: 0.76rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.35rem;
+    font-style: normal;
+  }
+
+  .tldr {
+    background: #f0ead7;
+    padding: 1.1rem 1.3rem;
+    border-radius: 3px;
+    margin: 1.4rem 0 1.8rem;
+    font-size: 0.97rem;
+  }
+  .tldr p { margin-bottom: 0.5rem; }
+  .tldr p:last-child { margin-bottom: 0; }
+
+  .toc {
+    margin: 2rem 0 0;
+    padding: 1.2rem 1.4rem;
+    background: rgba(107, 68, 35, 0.04);
+    border-radius: 3px;
+    font-size: 0.94rem;
+  }
+  .toc h2 {
+    font-size: 0.82rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-soft);
+    font-style: italic;
+    font-weight: 400;
+    margin: 0 0 0.8rem;
+  }
+  .toc ol {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
+  .toc li { margin-bottom: 0.3rem; }
+  .toc a {
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .toc a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .ranked li::marker {
+    color: var(--accent-soft);
+    font-variant-numeric: oldstyle-nums;
+  }
+
+  footer {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: 3rem 1.5rem 4rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    font-style: italic;
+    text-align: center;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.4rem 0 1.8rem;
+    font-size: 0.94rem;
+    font-feature-settings: "kern", "liga", "onum", "tnum";
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.8rem 0.6rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    line-height: 1.45;
+  }
+  th {
+    font-weight: 600;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent-soft);
+    font-style: italic;
+    border-bottom: 1px solid var(--accent-soft);
+  }
+  td code { font-size: 0.82em; }
+  td:last-child, th:last-child { padding-right: 0; }
+
+  .table-wrap {
+    margin: 1.4rem -0.5rem 1.8rem;
+    overflow-x: auto;
+  }
+  .table-wrap table { margin: 0; }
+
+  .mockup-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 2.2rem 0;
+  }
+
+  .mockup-row {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .mockup-caption {
+    text-align: center;
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+    font-style: italic;
+    max-width: 30rem;
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  /* iOS phone frame */
+  .phone {
+    width: 220px;
+    padding: 9px;
+    background: linear-gradient(145deg, #2a2520, #15120f);
+    border-radius: 30px;
+    box-shadow:
+      0 20px 40px -15px rgba(30, 26, 23, 0.3),
+      inset 0 0 0 1px rgba(255,255,255,0.05);
+  }
+  .phone-screen {
+    background: #fbf8f2;
+    border-radius: 22px;
+    overflow: hidden;
+    aspect-ratio: 9 / 19;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    font-size: 0.62rem;
+    line-height: 1.4;
+  }
+  .phone-notch {
+    width: 70px;
+    height: 18px;
+    background: #15120f;
+    border-radius: 0 0 12px 12px;
+    margin: 0 auto;
+  }
+  .phone-urlbar {
+    margin: 8px 8px 0;
+    padding: 4px 8px;
+    background: #e8e3d8;
+    border-radius: 8px;
+    color: #6b6055;
+    font-size: 0.56rem;
+    text-align: center;
+    font-family: -apple-system, system-ui, sans-serif;
+  }
+  .phone-content {
+    padding: 10px 12px;
+    font-family: "Iowan Old Style", Georgia, serif;
+    color: #3a322a;
+    flex: 1;
+    overflow: hidden;
+  }
+  .phone-content h4 {
+    font-size: 0.78rem;
+    margin: 0 0 4px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .phone-content p {
+    margin: 0 0 5px;
+    font-size: 0.58rem;
+    line-height: 1.45;
+  }
+  .phone-bottomsheet {
+    margin: auto 8px 8px;
+    padding: 10px 11px 9px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(30,26,23,0.12);
+    position: relative;
+    font-family: -apple-system, system-ui, sans-serif;
+  }
+  .phone-bottomsheet .close {
+    position: absolute;
+    top: 4px;
+    right: 7px;
+    font-size: 0.9rem;
+    color: #c0b5a5;
+    line-height: 1;
+    font-family: -apple-system, system-ui, sans-serif;
+  }
+  .phone-bottomsheet h5 {
+    margin: 0 0 3px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    font-family: "Iowan Old Style", Georgia, serif;
+  }
+  .phone-bottomsheet p {
+    margin: 0;
+    font-size: 0.54rem;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+  .phone-bottomsheet strong { color: var(--accent); font-weight: 600; }
+  .phone-toolbar {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 7px 8px 9px;
+    border-top: 1px solid #ede5d3;
+    background: #f0eadb;
+  }
+  .phone-toolbar .tb-btn {
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    color: #8c7a62;
+    border-radius: 5px;
+  }
+  .phone-toolbar .tb-btn.pulse {
+    color: var(--accent);
+    background: rgba(107, 68, 35, 0.12);
+    box-shadow: 0 0 0 2px var(--accent);
+    animation: pulse-glow 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 2px var(--accent); }
+    50% { box-shadow: 0 0 0 4px rgba(107,68,35,0.4); }
+  }
+
+  /* iOS share-sheet modal */
+  .phone-sharesheet {
+    position: absolute;
+    left: 6px; right: 6px; bottom: 6px;
+    background: rgba(250, 247, 242, 0.97);
+    backdrop-filter: blur(8px);
+    border-radius: 14px;
+    padding: 8px;
+    font-family: -apple-system, system-ui, sans-serif;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  }
+  .phone-sharesheet .ss-head {
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 3px 4px 6px;
+    color: var(--ink);
+    border-bottom: 1px solid #e8e3d8;
+    margin-bottom: 3px;
+  }
+  .phone-sharesheet .ss-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px;
+    font-size: 0.6rem;
+    color: var(--ink);
+    border-bottom: 1px solid #f0eadb;
+  }
+  .phone-sharesheet .ss-row:last-child { border-bottom: 0; }
+  .phone-sharesheet .ss-row.highlight {
+    background: rgba(107, 68, 35, 0.08);
+    border-radius: 6px;
+    outline: 2px solid var(--accent);
+    outline-offset: 0;
+    font-weight: 600;
+  }
+  .phone-sharesheet .ss-icon {
+    width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    color: var(--accent-soft);
+    flex-shrink: 0;
+  }
+  .phone-sharesheet .ss-row.highlight .ss-icon { color: var(--accent); }
+
+  /* Browser chrome (desktop) */
+  .browser {
+    width: 100%;
+    max-width: 480px;
+    background: #ded6c7;
+    border-radius: 8px 8px 5px 5px;
+    box-shadow: 0 14px 30px -10px rgba(30,26,23,0.2);
+    overflow: hidden;
+  }
+  .browser-chrome {
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #c7bfae;
+  }
+  .browser-dots {
+    display: flex;
+    gap: 5px;
+  }
+  .browser-dots span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #c0b5a5;
+  }
+  .browser-dots span:nth-child(1) { background: #e68f6e; }
+  .browser-dots span:nth-child(2) { background: #dbba5a; }
+  .browser-dots span:nth-child(3) { background: #7fa66b; }
+  .browser-urlbar {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fbf8f2;
+    border-radius: 14px;
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    font-family: -apple-system, system-ui, sans-serif;
+  }
+  .browser-urlbar .install-icon {
+    margin-left: auto;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 4px;
+    color: var(--accent);
+    background: rgba(107, 68, 35, 0.12);
+    box-shadow: 0 0 0 1.5px var(--accent);
+    animation: pulse-glow 2.2s ease-in-out infinite;
+  }
+  .browser-body {
+    background: #fbf8f2;
+    padding: 20px 24px 26px;
+    font-family: "Iowan Old Style", Georgia, serif;
+    min-height: 160px;
+    position: relative;
+  }
+  .browser-body h4 {
+    margin: 0 0 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .browser-body p {
+    margin: 0 0 12px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
+  }
+  .install-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--accent);
+    color: #fbf8f2;
+    border-radius: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: -apple-system, system-ui, sans-serif;
+    box-shadow: 0 2px 8px rgba(107,68,35,0.25);
+  }
+
+  /* Chrome install dialog overlay */
+  .browser-dialog {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 10px;
+    width: 240px;
+    background: white;
+    border: 1px solid #d0c7b5;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: -apple-system, system-ui, sans-serif;
+    box-shadow: 0 10px 25px rgba(30,26,23,0.18);
+    font-size: 0.72rem;
+  }
+  .browser-dialog h5 {
+    margin: 0 0 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .browser-dialog p {
+    margin: 0 0 10px;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+  .browser-dialog .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  .browser-dialog .dialog-actions button {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 0;
+    font-family: inherit;
+  }
+  .dialog-actions .primary {
+    background: var(--accent);
+    color: #fbf8f2;
+    font-weight: 600;
+  }
+  .dialog-actions .cancel {
+    background: transparent;
+    color: var(--ink-soft);
+  }
+
+  /* Desktop Safari menu hint */
+  .safari-menu {
+    width: 100%;
+    max-width: 280px;
+    background: #f5f0e4;
+    border: 1px solid #c7bfae;
+    border-radius: 6px;
+    padding: 6px 0;
+    font-family: -apple-system, system-ui, sans-serif;
+    box-shadow: 0 10px 25px rgba(30,26,23,0.15);
+    font-size: 0.78rem;
+  }
+  .safari-menu .menu-head {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    padding: 4px 14px 6px;
+    border-bottom: 1px solid #d9d1c5;
+    margin-bottom: 4px;
+    letter-spacing: 0.04em;
+  }
+  .safari-menu .menu-row {
+    padding: 5px 14px;
+    color: var(--ink);
+  }
+  .safari-menu .menu-row.highlight {
+    background: var(--accent);
+    color: #fbf8f2;
+    font-weight: 500;
+  }
+  .safari-menu .menu-row.separator {
+    border-top: 1px solid #d9d1c5;
+    height: 1px;
+    padding: 0;
+    margin: 4px 0;
+  }
+
+  .do-dont {
+    margin: 1.4rem 0 1.8rem;
+  }
+  .do-dont table th {
+    width: 50%;
+  }
+  .do-dont table th:first-child { color: #4a6b3c; }
+  .do-dont table th:last-child { color: #8c3c2c; }
+
+  pre {
+    background: rgba(107, 68, 35, 0.06);
+    border-left: 2px solid var(--accent-soft);
+    padding: 0.9rem 1.1rem;
+    margin: 1.3rem 0;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    color: var(--ink);
+    white-space: pre;
+    -webkit-text-size-adjust: 100%;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+  }
+
+  .sync-legend {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.7rem 1rem;
+    align-items: center;
+    margin: 1.4rem 0 1.8rem;
+    padding: 1.1rem 1.3rem;
+    background: rgba(107, 68, 35, 0.04);
+    border-radius: 4px;
+    font-size: 0.94rem;
+  }
+  .sync-status {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.86rem;
+    color: var(--ink);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .sync-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--ink-soft);
+    display: block;
+  }
+  .sync-icon.active { color: var(--accent); }
+  .sync-icon.alert  { color: #a6412c; }
+
+  .sync-icon.spinning { animation: sync-spin 2s linear infinite; transform-origin: center; }
+  .sync-icon.pulsing  { animation: sync-pulse 1.4s ease-in-out infinite; transform-origin: center; }
+
+  @keyframes sync-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes sync-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.55; transform: scale(0.88); }
+  }
+  .sync-legend .descr {
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+
+  .toast-mockup {
+    margin: 1.8rem auto;
+    max-width: 340px;
+    background: #1e1a17;
+    color: #fbf8f2;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-family: -apple-system, system-ui, sans-serif;
+    font-size: 0.86rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 10px 30px -10px rgba(30,26,23,0.5);
+  }
+  .toast-mockup .t-icon {
+    width: 16px;
+    height: 16px;
+    color: #8bbd6c;
+    flex-shrink: 0;
+  }
+  .toast-mockup .t-text {
+    flex: 1;
+    line-height: 1.35;
+  }
+  .toast-mockup .t-text em {
+    opacity: 0.75;
+    font-style: italic;
+    font-size: 0.78rem;
+    display: block;
+    margin-top: 2px;
+  }
+
+  @media (max-width: 40rem) {
+    header { padding-top: 2.5rem; }
+    header h1 { font-size: 1.9rem; }
+    main { padding-top: 2.5rem; }
+    h2 { font-size: 1.35rem; }
+    h3 { font-size: 1.08rem; }
+  }
+
+  @media print {
+    body { background: white; color: black; }
+    header, main, footer { max-width: none; }
+    .toc, .callout, .tldr { background: none; border: 1px solid #999; }
+    a { color: inherit; text-decoration: none; }
+  }
+
+  /* Site header — link back to docs INDEX, matches serve.py-rendered docs */
+  .site-header {
+    max-width: var(--measure-wide);
+    margin: 0 auto;
+    padding: 1.4rem 1.5rem 1rem;
+    display: flex;
+    align-items: baseline;
+    gap: 1.2rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .site-header a.home {
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-soft);
+    text-decoration: none;
+    font-style: italic;
+    white-space: nowrap;
+  }
+  .site-header a.home:hover { color: var(--accent); }
+  .breadcrumb {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .breadcrumb a { color: var(--ink-soft); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--accent); text-decoration: underline; }
+  .breadcrumb span { color: var(--rule); margin: 0 0.3em; }
+
+  /* Status update block — added 2026-04-26 per docs/editorial/CONVENTIONS.md */
+  .status-update {
+    margin: 0 0 3rem;
+    padding: 1rem 1.2rem;
+    background: rgba(107, 68, 35, 0.06);
+    border-left: 3px solid var(--accent-soft);
+    border-radius: 2px;
+  }
+  .status-update .eyebrow {
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-soft);
+    font-style: italic;
+    margin: 0 0 0.7rem;
+  }
+  .status-update ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    font-size: 0.95rem;
+  }
+  .status-update li {
+    margin-bottom: 0.55rem;
+    line-height: 1.55;
+  }
+  .status-update li:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <a class="home" href="/docs/">tolstoy.life / docs</a>
+  <span class="breadcrumb">
+    <a href="/docs/">Index</a>
+    <span>›</span>
+    architecture
+  </span>
+</div>
+
+<header>
+  <p class="eyebrow">Deep research report</p>
+  <h1>The Tolstoy PWA, examined</h1>
+  <p class="subtitle">A review of the local-first architecture, sync model, and build pipeline — with specific risks and priority fixes.</p>
+  <p class="meta">Drafted 23 April 2026 · synthesis of five parallel investigations</p>
+</header>
+
+<main>
+
+  <aside class="status-update">
+    <p class="eyebrow">Status update · 2026-04-26</p>
+    <ul>
+      <li><strong>Part 7 — build-pipeline cascade bug — fixed.</strong>
+        Per-work <code>manifest.json</code> no longer carries <code>wikiPreviewsUrl</code>; the work hash now excludes generated cross-references. See <a href="../pwa/tl-pipeline-integration">tl-pipeline-integration.md §4.6</a> and the changelog entry on that doc dated 2026-04-24.</li>
+      <li><strong>Part 7 / Part 9 — determinism CI test — implemented.</strong>
+        Wired into <code>.github/scripts/check-determinism.mjs</code> + a workflow that runs on every PR to <code>main</code>. See <a href="../pwa/tl-pipeline-integration">tl-pipeline-integration.md §6.4</a>, added 2026-04-24.</li>
+      <li><strong>Part 9 — chapterUri validator — implemented.</strong>
+        <code>validate-frontmatter.mjs</code> enforces presence, format, slug match, and uniqueness on every PR. See <a href="../pwa/tl-pipeline-integration">tl-pipeline-integration.md §8.2</a>, added 2026-04-24.</li>
+      <li><strong>Part 6 — Yjs <code>TextualBody</code> silent-duplicate fix — resolved.</strong>
+        <code>body</code> is a <code>Y.Array</code> of <code>Y.Map</code>; <code>TextualBody.value</code> is a <code>Y.Text</code>, so concurrent edits merge at character level rather than producing silent duplicates. See <a href="../pwa/yjs-schema-and-sync">yjs-schema-and-sync.md §2.3</a>, rewritten 2026-04-24.</li>
+    </ul>
+  </aside>
+
+  <nav class="toc" aria-label="Table of contents">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#sync-explainer">How the sync model actually works</a></li>
+      <li><a href="#storage-topology">What lives on device (and what a cache clear takes)</a></li>
+      <li><a href="#install-ux">Installing the app — the UX problem</a></li>
+      <li><a href="#sync-visibility">What sync should feel like</a></li>
+      <li><a href="#volume">Will the corpus volume be manageable?</a></li>
+      <li><a href="#sync-problems">Could there be problems with the QR sync model?</a></li>
+      <li><a href="#pipeline-bug">The nastiest finding: a build-pipeline cascade bug</a></li>
+      <li><a href="#hosting">Hosting — where does all this run?</a></li>
+      <li><a href="#priority-fixes">Priority fixes, ranked</a></li>
+      <li><a href="#verdict">Overall verdict</a></li>
+    </ol>
+  </nav>
+
+  <section id="sync-explainer">
+    <h2><span class="num">Part 1</span>How the sync model actually works</h2>
+
+    <p class="lede">The sync model has three independent pieces that people often conflate. Let me separate them.</p>
+
+    <h3>Piece A — What's being synced</h3>
+    <p><strong>Only your annotations</strong>, not the books. The books (works + wiki articles) are public files on tolstoy.life — you download them fresh from the origin when you want to read offline. The <strong>only</strong> mutable user-owned data is your annotations: bookmarks, highlights, notes, reading position, tags. That's maybe tens of kilobytes for a casual reader, maybe 5–15&nbsp;MB for a power user after years.</p>
+    <p>So "sync" means: keep that small blob of annotations in agreement between your phone, your laptop, and wherever else you read. Nothing else is synced.</p>
+
+    <h3>Piece B — How the conflict-free merge works (the CRDT)</h3>
+    <p>The annotations are stored locally in a thing called a <strong>Y.Doc</strong> (a Yjs document — Yjs is a well-known open-source CRDT library). A CRDT is a data structure where two people can edit offline, come back online, and the merge is deterministic — no "resolve merge conflict" dialog, no "the server decides." Both sides converge to the same state by math.</p>
+    <p>Practically: every change you make to an annotation becomes an <strong>operation</strong> (an <em>op</em>) — "inserted text here", "set body to X", "deleted annotation Y." Ops carry a little metadata (which device, a logical clock). When two devices exchange ops, Yjs replays them in a well-defined order and both end up with the same final state.</p>
+    <p>This Y.Doc is persisted to your browser's <strong>IndexedDB</strong> via a library called <code>y-indexeddb</code>. So "your annotations" live in IndexedDB on your phone <em>and</em> in IndexedDB on your laptop — each is a complete, authoritative copy.</p>
+
+    <h3>Piece C — How devices find each other (the relay + pairing)</h3>
+    <p>For two devices to exchange ops, they need a rendezvous point. That's the <strong>sync relay</strong>: a tiny Cloudflare Worker + Durable Object. It's a "dumb pipe" — its entire job is to forward opaque binary blobs from phone to laptop and vice versa. It doesn't parse your annotations; it doesn't know if you're annotating <em>War and Peace</em> or <em>Anna Karenina</em>; it just sees "room ID X received 4&nbsp;KB of bytes, forward to the other device connected to room X."</p>
+    <p>A "room" is just a UUID. Your annotations live in your room. Two things are needed to connect to your room:</p>
+    <ol>
+      <li><strong>The room ID</strong> (a UUID)</li>
+      <li><strong>The sync key</strong> (a random 256-bit secret, used to HMAC-sign your messages so the relay knows you belong there)</li>
+    </ol>
+    <p>There's no account, no email, no password. The key <em>is</em> your identity.</p>
+
+    <h4>The pairing flow</h4>
+    <p>How a second device gets the room ID and sync key without a server to look them up:</p>
+    <ol>
+      <li>Phone (already set up) generates a QR code. Inside the QR code is a URL: <code>https://tolstoy.life/pair#room=&lt;id&gt;&amp;key=&lt;key&gt;&amp;did=&lt;deviceid&gt;&amp;exp=&lt;5min&gt;&amp;sig=&lt;hmac&gt;</code>.</li>
+      <li><strong>Everything after the <code>#</code> (the "URL fragment") stays client-side</strong> — browsers don't send fragments to servers, so tolstoy.life's logs see only <code>/pair</code>, never the key.</li>
+      <li>Laptop scans the QR (via camera) or the user types in a BIP-39 six-word phrase on a phone call.</li>
+      <li>Laptop opens the URL, extracts the fragment, does a confirmation handshake with the phone via the relay.</li>
+      <li>Laptop now has room ID + sync key → connects to the relay → Yjs reconciles both sides → laptop has your annotation history.</li>
+    </ol>
+    <p>That's the whole sync model. The elegance is that the server is trivial (~150 lines of TypeScript), carries no secrets, can be thrown away and rebuilt, and can never leak user data it doesn't have.</p>
+  </section>
+
+  <section id="storage-topology">
+    <h2><span class="num">Part 2</span>What lives on device — and what a cache clear takes with it</h2>
+
+    <p class="lede">Books and annotations both persist on device, but in different browser APIs with different cleanup triggers. Worth making explicit because "clear cache" means different things in different places.</p>
+
+    <h3>Storage topology</h3>
+    <p>Once a work is downloaded for offline reading, here's where each piece actually lives:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Storage bucket</th><th>Browser API</th><th>What lives there</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>tolstoy-work-v1:war-and-peace:v2026-03-01-a3f5c8</code></td>
+            <td>Cache API</td>
+            <td>The work's XHTML chapters, CSS, images</td>
+          </tr>
+          <tr>
+            <td><code>tolstoy-wiki-v&lt;bundle-version&gt;</code></td>
+            <td>Cache API</td>
+            <td>Shared wiki articles referenced by any downloaded work</td>
+          </tr>
+          <tr>
+            <td>Workbox precache</td>
+            <td>Cache API</td>
+            <td>App shell + wiki-previews bundle</td>
+          </tr>
+          <tr>
+            <td><code>tolstoy-life-annotations</code></td>
+            <td>IndexedDB (via <code>y-indexeddb</code>)</td>
+            <td>The Y.Doc: your annotations, bookmarks, reading position</td>
+          </tr>
+          <tr>
+            <td><code>downloadedWorks</code> store</td>
+            <td>IndexedDB (separate)</td>
+            <td>Metadata: which works are downloaded, versions, sizes, status</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Cache API and IndexedDB are both persistent browser storage, both sit under the <code>navigator.storage</code> quota, both survive app closes, reboots, and OS updates. They're separate APIs because they're optimised for different things: Cache API speaks HTTP (request → response), so the service worker can serve from it on every navigation; IndexedDB is for structured data with indexes.</p>
+
+    <p>Importantly, Cache API is <em>not</em> the browser's HTTP cache despite the confusing name.</p>
+
+    <h3>The scenarios</h3>
+
+    <h4>1 · Clearing the browser's HTTP cache</h4>
+    <p>Chrome → "Cached images and files", Firefox → "Cached Web Content". <strong>Nothing lost.</strong> HTTP cache is separate from both Cache API and IndexedDB. This is the safe one.</p>
+
+    <h4>2 · Clearing "site data" / "Cookies and other site data"</h4>
+    <p>Chrome or Firefox. <strong>Everything for tolstoy.life goes.</strong> Cache API + IndexedDB + localStorage + service worker, all wiped together.</p>
+
+    <h4>3 · Safari → "Clear History and Website Data"</h4>
+    <p>macOS or iOS Settings. Same as scenario 2 — a full origin-bucket wipe. Safari doesn't let you clear only part of it.</p>
+
+    <h4>4 · iOS 7-day ITP auto-eviction</h4>
+    <p>Uninstalled PWA, no interaction for 7 days. Same as scenario 2, but <em>silent</em>.</p>
+
+    <h4>5 · User removes PWA from home screen</h4>
+    <p>iOS: data usually survives in Safari's shared origin bucket. Android: depends on OS version; uninstalling through the app manager typically wipes it.</p>
+
+    <h3>What survives a site-data wipe</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Data</th><th>Status after wipe</th><th>Recoverable?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Works (War and Peace etc.)</td>
+            <td><strong>Gone</strong></td>
+            <td>Yes — re-download from tolstoy.life. Free, public domain, immutable. No real loss.</td>
+          </tr>
+          <tr>
+            <td>Wiki articles</td>
+            <td><strong>Gone</strong></td>
+            <td>Yes — re-download.</td>
+          </tr>
+          <tr>
+            <td>App shell</td>
+            <td><strong>Gone</strong></td>
+            <td>Yes — auto-refetched on next visit.</td>
+          </tr>
+          <tr>
+            <td>Annotations (Y.Doc)</td>
+            <td><strong>Gone locally</strong></td>
+            <td>Only if (a) sync is enabled and another paired device still has them, or (b) the user exported to JSON-LD, or (c) the encrypted-backup-to-user-URL was set up.</td>
+          </tr>
+          <tr>
+            <td>Sync key</td>
+            <td><strong>Gone</strong></td>
+            <td>Only if exported to a password manager, paper, or backup file.</td>
+          </tr>
+          <tr>
+            <td>Downloaded-works metadata</td>
+            <td><strong>Gone</strong></td>
+            <td>Not directly — the app wouldn't know which works used to be downloaded.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>The load-bearing insight</h3>
+
+    <p><strong>Books are always recoverable</strong> — they're public-domain files on the origin. <strong>Annotations are the only data that can be truly lost</strong> if the user hasn't exported and hasn't enabled sync with another device.</p>
+
+    <p>This is why the architecture relies on three defences for annotations: (1) JSON-LD export, (2) device sync as defence-in-depth, (3) encrypted backup to a user-controlled URL. Any one of them is enough.</p>
+
+    <div class="callout">
+      <strong class="tag">One gap worth repeating</strong>
+      <p>If the user is dormant for 180+ days, the relay room is pruned (see priority fix #14 below). So "sync with another device" only saves you if <em>at least one paired device was active within that window</em>. A lone user who syncs once, then clears data on both devices after a long absence, loses the annotations even if they had "sync enabled."</p>
+    </div>
+  </section>
+
+  <section id="install-ux">
+    <h2><span class="num">Part 3</span>Installing the app — the UX problem</h2>
+
+    <p class="lede">The 7-day eviction story in Part 2 means one thing: installing the PWA to the home screen is not an optional power-user feature. It's the difference between a library that survives and one that quietly disappears after a week on iOS. Which makes the install UX the single most important piece of onboarding this project has.</p>
+
+    <p>And install UX is platform-fractured. Each operating system handles it differently — some let you prompt programmatically, some don't, one of them (iOS) treats PWAs as a second-class citizen entirely. The site has to detect what's possible and render the right flow for each.</p>
+
+    <h3>Device landscape</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Platform</th><th>Install surface</th><th>API</th><th>Friction</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>iOS Safari</td>
+            <td>Manual: Share → Add to Home Screen</td>
+            <td>None</td>
+            <td>High — three taps, discoverability is a known problem</td>
+          </tr>
+          <tr>
+            <td>Chrome iOS / Firefox iOS</td>
+            <td>Not available — they use WKWebView but don't expose A2HS</td>
+            <td>None</td>
+            <td>Impossible — user must switch to Safari</td>
+          </tr>
+          <tr>
+            <td>Android Chrome</td>
+            <td>Browser menu "Install app" + site-triggered dialog</td>
+            <td><code>beforeinstallprompt</code></td>
+            <td>Low — one tap once prompt fires</td>
+          </tr>
+          <tr>
+            <td>Desktop Chrome / Edge</td>
+            <td>Address-bar install icon + site button</td>
+            <td><code>beforeinstallprompt</code></td>
+            <td>Low</td>
+          </tr>
+          <tr>
+            <td>Safari macOS 14+</td>
+            <td>Manual: File → Add to Dock (since Sonoma, 2023)</td>
+            <td>None</td>
+            <td>Medium — discoverable but silent</td>
+          </tr>
+          <tr>
+            <td>Firefox desktop / Android</td>
+            <td>Not supported natively</td>
+            <td>None</td>
+            <td>N/A — skip install UI</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>The decision tree</h3>
+
+    <p>Before showing any install UI, detect in this order:</p>
+
+    <ol>
+      <li>Already installed? → <code>matchMedia('(display-mode: standalone)').matches</code> or <code>navigator.standalone</code>. If yes, show nothing.</li>
+      <li><code>beforeinstallprompt</code> firing? → Chrome / Edge / Android. Show a site install button.</li>
+      <li>iOS Safari? → <code>'standalone' in navigator</code> and not standalone. Show the illustrated Share hint.</li>
+      <li>Chrome or Firefox on iOS? → One-liner "Open in Safari to install."</li>
+      <li>Safari on macOS? → Tip card in Settings: "File → Add to Dock."</li>
+      <li>Otherwise (Firefox desktop/Android) → Hide the install surface entirely.</li>
+    </ol>
+
+    <h3>The iOS pattern — an illustrated share-sheet hint</h3>
+
+    <p>iOS is the hardest case and the most important. Since there's no prompt API, the site has to teach the user the three-tap gesture. The canonical approach: a small bottom-sheet that appears on the second visit, or right after a meaningful event like creating an annotation, showing the Share glyph and pointing at where to find it in the toolbar.</p>
+
+    <div class="mockup-stack">
+      <div class="mockup-row">
+        <div>
+          <div class="phone" aria-hidden="true">
+            <div class="phone-screen">
+              <div class="phone-notch"></div>
+              <div class="phone-urlbar">tolstoy.life</div>
+              <div class="phone-content">
+                <h4>War and Peace</h4>
+                <p>"Well, Prince, so Genoa and Lucca are now just family estates of the Buonapartes."</p>
+                <p>"But I warn you, if you don't tell me that this means war, if you still try to defend…"</p>
+              </div>
+              <div class="phone-bottomsheet">
+                <span class="close">×</span>
+                <h5>Keep your library on this device</h5>
+                <p>Tap <strong>Share</strong>, then <strong>Add to Home&nbsp;Screen</strong>.</p>
+              </div>
+              <div class="phone-toolbar">
+                <span class="tb-btn" aria-hidden="true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </span>
+                <span class="tb-btn" aria-hidden="true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </span>
+                <span class="tb-btn pulse" aria-hidden="true" title="Share">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><polyline points="7 8 12 3 17 8"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+                </span>
+                <span class="tb-btn" aria-hidden="true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </span>
+                <span class="tb-btn" aria-hidden="true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+                </span>
+              </div>
+            </div>
+          </div>
+          <p class="mockup-caption">Step 1 · The in-app hint, with the Share button highlighted in iPhone Safari's bottom toolbar.</p>
+        </div>
+
+        <div>
+          <div class="phone" aria-hidden="true">
+            <div class="phone-screen">
+              <div class="phone-notch"></div>
+              <div class="phone-urlbar">tolstoy.life</div>
+              <div class="phone-content">
+                <h4>War and Peace</h4>
+                <p>"Well, Prince, so Genoa and Lucca are now just family estates of…"</p>
+              </div>
+              <div class="phone-sharesheet">
+                <div class="ss-head">tolstoy.life</div>
+                <div class="ss-row">
+                  <span class="ss-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  </span>
+                  AirDrop
+                </div>
+                <div class="ss-row">
+                  <span class="ss-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 8h18"/></svg>
+                  </span>
+                  Copy Link
+                </div>
+                <div class="ss-row highlight">
+                  <span class="ss-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+                  </span>
+                  Add to Home&nbsp;Screen
+                </div>
+                <div class="ss-row">
+                  <span class="ss-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/></svg>
+                  </span>
+                  Add to Reading&nbsp;List
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="mockup-caption">Step 2 · Apple's native share sheet. The user taps the highlighted row.</p>
+        </div>
+      </div>
+    </div>
+
+    <p>A critical detail: on iPhone (iOS 15+) the Share button is in the <em>bottom</em> toolbar; on iPad it's <em>top-right</em>. The arrow in the hint should point accordingly. Detect with a pointer + viewport check, not UA.</p>
+
+    <h3>The Android / desktop Chrome pattern — a first-class install button</h3>
+
+    <p>Where <code>beforeinstallprompt</code> works, the pattern is well-established:</p>
+
+    <ol>
+      <li>Listen for the event, call <code>preventDefault()</code>, stash it.</li>
+      <li>Reveal a site-placed "Install Tolstoy" button — in Settings, or as a contextual card right after the user taps "Make available offline."</li>
+      <li>On click, call <code>event.prompt()</code>. The browser shows its own native dialog.</li>
+      <li>Listen for <code>appinstalled</code> and hide the button.</li>
+    </ol>
+
+    <div class="mockup-stack">
+      <div class="browser" aria-hidden="true">
+        <div class="browser-chrome">
+          <div class="browser-dots"><span></span><span></span><span></span></div>
+          <div class="browser-urlbar">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            tolstoy.life/works/war-and-peace/
+            <span class="install-icon" title="Install Tolstoy">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+            </span>
+          </div>
+        </div>
+        <div class="browser-body">
+          <h4>War and Peace</h4>
+          <p>You just saved this work to your device. Install Tolstoy to keep your annotations and downloaded works safe, even offline.</p>
+          <span class="install-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>
+            Install Tolstoy
+          </span>
+
+          <div class="browser-dialog">
+            <h5>Install app?</h5>
+            <p>tolstoy.life · Read Tolstoy offline, with your library and annotations kept safe on this device.</p>
+            <div class="dialog-actions">
+              <button class="cancel">Cancel</button>
+              <button class="primary">Install</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="mockup-caption">Android / Chrome / Edge · A site-placed button triggers the browser's native install dialog. The address bar also shows a corresponding install icon (top-right).</p>
+    </div>
+
+    <h3>The desktop Safari pattern — a static tip card</h3>
+
+    <p>Safari macOS has "Add to Dock" from the File menu since Sonoma (2023), but no API. The site's only move is a small static tip card in Settings or after high engagement.</p>
+
+    <div class="mockup-stack">
+      <div class="safari-menu" aria-hidden="true">
+        <div class="menu-head">FILE</div>
+        <div class="menu-row">New Window</div>
+        <div class="menu-row">New Tab</div>
+        <div class="menu-row">Open Location…</div>
+        <div class="menu-row separator"></div>
+        <div class="menu-row">Share</div>
+        <div class="menu-row highlight">Add to Dock…</div>
+        <div class="menu-row">Export as PDF…</div>
+        <div class="menu-row separator"></div>
+        <div class="menu-row">Close Tab</div>
+      </div>
+      <p class="mockup-caption">Desktop Safari · The site can't trigger this; it can only tell users where to find it. A static card in Settings works best.</p>
+    </div>
+
+    <h3>Copy that works</h3>
+
+    <div class="do-dont table-wrap">
+      <table>
+        <thead><tr><th>Use</th><th>Avoid</th></tr></thead>
+        <tbody>
+          <tr><td>"Add Tolstoy to your Home Screen"</td><td>"Install this app"</td></tr>
+          <tr><td>"Keep your library on this device"</td><td>"Download"</td></tr>
+          <tr><td>"Read offline, forever"</td><td>"Save for offline" (reads as per-book action)</td></tr>
+          <tr><td>"Your annotations stay safe on your device"</td><td>"Enable app mode"</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>The word <em>install</em> triggers App Store expectations on iOS. Avoid it. Apple's own verb is "Add to Home Screen" — use theirs.</p>
+
+    <h3>Timing — earn the ask</h3>
+
+    <p>Never show on first visit. Always wait for a meaningful engagement signal. For a reader, good triggers are ranked:</p>
+
+    <ol class="ranked">
+      <li><strong>The user just created data worth losing.</strong> First annotation made, first work tapped "Make available offline." This is the strongest pitch — "We just saved this on your device. Would you like to make sure it stays?"</li>
+      <li>Second session (user returned voluntarily).</li>
+      <li>More than 60&nbsp;s of reading in the current session.</li>
+      <li>More than 50% scroll through a chapter.</li>
+    </ol>
+
+    <p>Defer to <code>requestIdleCallback</code> so the hint never competes with reading.</p>
+
+    <h3>Dismissal and frequency</h3>
+
+    <ul>
+      <li>Explicit close button, 44×44&nbsp;px minimum (WCAG 2.5.5 AAA).</li>
+      <li>Persist dismissal with timestamp and count in <code>localStorage</code>.</li>
+      <li>Re-surface only after 90 days <em>and</em> another high-signal event.</li>
+      <li>Lifetime cap: 3 impressions. Keep a permanent "Install help" link in Settings so users who change their mind can find it.</li>
+      <li>On <code>appinstalled</code> or standalone-mode detection, clear dismissal state and never prompt again.</li>
+    </ul>
+
+    <h3>In-app browsers</h3>
+
+    <p>A user tapping a tolstoy.life link from Twitter, Gmail, Facebook, or Instagram lands in a WKWebView that has no Add to Home Screen in its share sheet. Detect the missing <code>standalone</code> property or absent <code>beforeinstallprompt</code>, and show one line: "Open this page in Safari to install." Never show the full illustrated hint — it'll only frustrate them.</p>
+
+    <h3>Recommendation for tolstoy.life</h3>
+
+    <div class="callout">
+      <strong class="tag">Recommended stack</strong>
+      <p>Write a ~80-line vanilla web component — no dependency, fits the project's lean-web discipline, lives in CUBE's Block layer. Gate behind: <code>isInstallable &amp;&amp; !isStandalone &amp;&amp; !isInAppBrowser &amp;&amp; engagementScore &gt;= threshold &amp;&amp; !recentlyDismissed</code>. Trigger specifically on the first "Make available offline" tap — the moment the user has just produced persistent data is the moment the pitch writes itself.</p>
+    </div>
+
+    <p>Headline copy for that trigger, specific to the project's voice:</p>
+
+    <blockquote>Your note is saved here. Add Tolstoy to your Home Screen so it stays — even if you don't visit for a while.</blockquote>
+
+    <p>Honest, mechanism-explaining, and aligned with the values check in the README: it <em>honours the reader's device as a resource</em>.</p>
+  </section>
+
+  <section id="sync-visibility">
+    <h2><span class="num">Part 4</span>What sync should feel like</h2>
+
+    <p class="lede">Once two devices are paired, what does the user actually experience when edits made on the phone appear on the laptop? The spec is notably quiet about this. It says "show appropriate UI, but never block the user" — and stops. The design is left as an exercise.</p>
+
+    <p>The right answer is a specific kind of calm. Not silent, but close. Not chatty, not at all.</p>
+
+    <h3>The guiding principle</h3>
+
+    <div class="callout">
+      <strong class="tag">Principle</strong>
+      <p>Calm by default · honest on demand · loud only on conflict.</p>
+    </div>
+
+    <p>Mature sync apps converge on this shape. Apple Notes, Obsidian Sync, iA Writer, Linear — none of them announce that sync is happening. They just let the updates appear, the way paper pages let ink appear: without ceremony. The app should feel like it remembered where you left off, because it did.</p>
+
+    <h3>Six states, six treatments</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>State</th><th>What the user sees</th><th>Blocks reading?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>App opens with new edits from another device</td>
+            <td>The edits are <em>already there</em>. Optional: a thin toast on open, auto-dismisses in 2–3 s. Never mid-reading.</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Active sync while the app is open</td>
+            <td>A small refresh glyph in the corner rotates briefly, then settles. No text.</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Connected and caught up (steady state)</td>
+            <td>A quiet check-in-circle glyph, or nothing at all if the user prefers (toggle in Settings).</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Offline (no connection)</td>
+            <td>The glyph becomes a cloud-with-slash. Everything still works locally. No alarms.</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Sync failing repeatedly</td>
+            <td>The glyph becomes an exclamation-in-circle. Hovering or tapping opens Settings with the real error.</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td><strong>Conflict on the same annotation</strong></td>
+            <td><strong>Surfaced.</strong> A small banner at the top of the annotation: "Edited on two devices. Keep this version / keep the other."</td>
+            <td>Blocks that one annotation until resolved</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>The fact that conflicts <em>are</em> visible is what lets everything else be invisible. If the user trusts that the app will tell them when a decision is needed, they can trust its silence the rest of the time.</p>
+
+    <h3>The sync indicator</h3>
+
+    <p>One small glyph, tucked into the settings corner or next to the work title. No text unless the user asks for it. Each state has a distinct <em>shape</em>, not just a distinct colour — so the indicator remains legible for colour-blind readers and in any ambient lighting where tinted dots would fade into the paper-coloured background. Two of the five states animate (spin for active sync, pulse for demand), adding a third channel that works without colour perception at all.</p>
+
+    <div class="sync-legend">
+      <div class="sync-status">
+        <svg class="sync-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Synced"><circle cx="12" cy="12" r="9"/><path d="M8 12.5 11 15.5 16.5 9.5"/></svg>
+        Synced
+      </div>
+      <div class="descr">Connected and caught up. The default state — a quiet check inside a circle. Could be hidden entirely for readers who find any indicator distracting.</div>
+
+      <div class="sync-status">
+        <svg class="sync-icon active spinning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Syncing"><path d="M21 12a9 9 0 0 1-15.5 6.3"/><polyline points="3 12 3 18 9 18"/><path d="M3 12a9 9 0 0 1 15.5-6.3"/><polyline points="21 12 21 6 15 6"/></svg>
+        Syncing
+      </div>
+      <div class="descr">Two arrows circling, rotating gently. Sending or receiving updates right now. Should never last more than a few seconds in normal use.</div>
+
+      <div class="sync-status">
+        <svg class="sync-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Offline"><path d="M18.9 15A5 5 0 0 0 18 5.1a7 7 0 0 0-11.5-2"/><path d="M5.5 9.2A5 5 0 0 0 6 19h9"/><line x1="3" y1="3" x2="21" y2="21"/></svg>
+        Offline
+      </div>
+      <div class="descr">A cloud with a line through it. No connection. Reading and writing still work — edits queue up locally and sync when signal returns.</div>
+
+      <div class="sync-status">
+        <svg class="sync-icon alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Error"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="none"/></svg>
+        Error
+      </div>
+      <div class="descr">An exclamation inside a circle. Something failed — relay unreachable, auth issue, timeout. Tapping reveals the detail in Settings.</div>
+
+      <div class="sync-status">
+        <svg class="sync-icon alert pulsing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Needs attention"><path d="M10.3 3.9 2.1 17.6A2 2 0 0 0 3.8 20.6h16.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13.5"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/></svg>
+        Needs attention
+      </div>
+      <div class="descr">A pulsing warning triangle. A conflict requires a decision. The only state that <em>actively</em> asks the user to do something — the pulse, not the colour, is what catches the eye.</div>
+    </div>
+
+    <h3>The welcome-back toast</h3>
+
+    <p>When the laptop opens and there are fresh edits from the phone, a thin pill appears — briefly, once, never mid-reading:</p>
+
+    <div class="toast-mockup" aria-hidden="true">
+      <svg class="t-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5 11 15.5 16.5 9.5"/></svg>
+      <span class="t-text">
+        Updated with 3 new highlights from iPhone
+        <em>just now · auto-dismissing</em>
+      </span>
+    </div>
+
+    <p>Auto-dismisses in about 2 seconds. No actions, no "OK" button. The user doesn't need to acknowledge that sync happened — it's not an event, it's the default state of reality. If they missed the toast, the edits are still there.</p>
+
+    <p>Whether to ship this toast at all is a judgement call. Apple Notes doesn't — updates just appear. Raindrop and Notion do. Argument for: it builds trust, especially early on. Argument against: a reader shouldn't have to acknowledge their own library. My recommendation: ship it, make it dismissable-forever in settings after the first time ("Got it, don't remind me again"), and let the reader opt out once they trust the system.</p>
+
+    <h3>What lives in Settings instead</h3>
+
+    <p>For users who want the detail, the Settings → Sync panel has everything:</p>
+
+    <blockquote>
+      Last synced 2 minutes ago · 3 devices · 247 annotations<br>
+      <em>iPhone · paired March 2026</em><br>
+      <em>Work laptop · paired April 2026</em><br>
+      <em>Home iPad · paired April 2026</em><br>
+      End-to-end encryption: <strong>on</strong>
+    </blockquote>
+
+    <p>Exposed on demand, never pushed. The dot in the corner is the tip of the iceberg; this is the rest.</p>
+
+    <h3>Why it matters</h3>
+
+    <p>An e-reader for Tolstoy is not Slack. It doesn't need to feel alive, or present, or eager to talk. It needs to feel like a book that happens to remember where you left it. Every pixel of sync chrome on the screen is a pixel not giving itself to the text.</p>
+
+    <p>The architecture has made this easy to honour: the CRDT reconciles without asking anyone's permission, the sync key is already on the laptop, the annotations are already in IndexedDB. The UI can stay out of the way because the system is doing its job underneath. Calm by default is not laziness — it's trust in the design.</p>
+
+    <p>There's one hard dependency on the fixes in Part 6: the "loud only on conflict" treatment only works if conflicts are actually rare. Right now, with the §2.3/§8 shape inconsistency and the Y.Array-of-plain-objects duplication bug, concurrent edits can produce <em>silent</em> duplicates and losses — which is the worst of both worlds (the user sees no banner, but their data is gone). Resolving those before Stage 4 ships is what lets this UX be honest.</p>
+  </section>
+
+  <section id="volume">
+    <h2><span class="num">Part 5</span>Will the corpus volume be manageable?</h2>
+
+    <div class="tldr">
+      <p><strong>Short answer:</strong> yes for most users, but with several specific gotchas that the current docs under-estimate.</p>
+    </div>
+
+    <h3>What's actually fine</h3>
+    <ul>
+      <li><strong>Text-only full-scope downloads (~2.5&nbsp;GB):</strong> 500+ translated works + 90 Jubilee volumes + 10K letters + full wiki + wiki-previews fit comfortably inside Chrome/Firefox/Safari desktop quotas (which are tens of GB in 2026).</li>
+      <li><strong>Individual work downloads:</strong> <em>War and Peace</em> as served HTML is ~4–8&nbsp;MB. Nothing scary there.</li>
+      <li><strong>Cache API at 26,500 entries:</strong> fine for reads. Bulk-writing the whole wiki needs chunking + yielding to the event loop, but that's a coding note, not an architectural problem.</li>
+      <li><strong>Y.Doc size for realistic users:</strong> 5–15&nbsp;MB encoded for a power user with 10K annotations. IndexedDB handles that easily.</li>
+    </ul>
+
+    <h3>Real volume risks</h3>
+    <ol>
+      <li><strong>iOS Safari 7-day eviction.</strong> If a user reads in Safari without adding the site to their home screen, iOS will wipe their downloads after 7 days of non-use — even with <code>navigator.storage.persist()</code> granted. The "train reader" user story breaks on iOS unless the user installed to home screen first. The docs say "never block features behind install" which collides with this. Recommendation: elevate install-before-download to a strong prompt on iOS.</li>
+      <li><strong><code>works.json</code> busts its budget by 30×.</strong> The design targets ≤100&nbsp;KB. At full scope (~10,000 letters indexed as works per the schema) it becomes ~3&nbsp;MB unminified. Fix: split into <code>works.json</code> / <code>letters.json</code> / <code>volumes.json</code>, or group letters into letter-volume works.</li>
+      <li><strong>Versioned work caches leak.</strong> Stage-1 §4.2 says "old cache stays intact until the user explicitly migrates" — but users don't migrate. A user who updates <em>War and Peace</em> twice keeps 3 × 8&nbsp;MB = 24&nbsp;MB per work. Across 500 downloaded works that's 12&nbsp;GB of stale cached versions with no prune. Fix: auto-prune non-current versions after N days unless annotations still reference them.</li>
+      <li><strong>Wiki-previews bundle at ~3&nbsp;MB gzipped.</strong> The docs hand-wave "lazy-load if it gets large." It already is large at full scope. Make lazy-load the default.</li>
+      <li><strong>Prior-version artifacts have no durable home.</strong> Tl-pipeline §3.4 says current + 2 prior versions are served, but the versioned subtrees live only in the build output. Netlify build cache is best-effort. If the cache is wiped, annotations anchored to v2024-01-01 silently 404 until someone rebuilds from the right git tag.</li>
+    </ol>
+
+    <div class="callout">
+      <strong class="tag">Verdict</strong>
+      <p>The volume story is 80% fine, but the 20% includes user-visible data-loss modes that deserve to be named in the docs, not left as "TBD."</p>
+    </div>
+  </section>
+
+  <section id="sync-problems">
+    <h2><span class="num">Part 6</span>Could there be problems with the QR sync model?</h2>
+
+    <div class="tldr">
+      <p><strong>Yes — several serious ones.</strong> All fixable before Stage 4 ships, but none are currently specced.</p>
+      <p>Three categories: pairing protocol, CRDT semantics, platform assumptions.</p>
+    </div>
+
+    <h3>3A · Pairing protocol weaknesses</h3>
+
+    <ol>
+      <li><strong>Device re-registration defeats revocation.</strong> §4.7 says "revocation is immediate." But the relay authorizes any <code>did</code> whose HMAC is valid — and HMAC validity requires the sync key, which a stolen or compromised device still has. A thief's phone, after "revocation," can simply mint a new <code>did</code> and re-register. <strong>Revocation without key rotation is a placebo.</strong> Fix: require new-device registration to be signed by an <em>already-authorized</em> device, and make the "stolen device" UI force a key rotation.</li>
+
+      <li><strong>Confirmation UI can't distinguish attacker from real device.</strong> §6.1 step 5 says the two devices exchange a confirmation "so an attacker who somehow obtained the QR can't silently pair." But if the attacker wins the race to the relay, the user simply clicks "yes that's my new phone" on the attacker's connection. Fix: use a Short Authentication String (SAS) — a 4–6 digit code derived post-key-exchange and shown on <em>both</em> devices. The user compares them visually, like Signal does. Without SAS, the confirmation is theater.</li>
+
+      <li><strong>Same key used for HMAC and AES-GCM.</strong> §4.3.1 encrypts with "the sync key"; §4.3 HMACs with "the sync key." That's a textbook crypto footgun — key-separation failure. Fix: HKDF the root key into <code>K_hmac</code>, <code>K_aead</code>, <code>K_export</code> with explicit labels.</li>
+
+      <li><strong>iCloud Tabs may replicate the pairing URL fragment.</strong> If the QR is scanned into Safari (not the installed PWA), the URL including the fragment (containing the key) ends up in Safari history, which iCloud syncs to other Apple devices. Fix: (a) <code>history.replaceState</code> on <code>/pair</code> load to drop the fragment from the URL bar before iCloud sees it; (b) switch to a short opaque token that the PWA exchanges for the real key via a short-lived Worker endpoint.</li>
+
+      <li><strong>BarcodeDetector is NOT in Safari or iOS.</strong> The docs treat it as "default, BIP-39 as fallback." Reality: BIP-39 must be primary on iOS (which is the most security-sensitive path because of #4). The docs need a straight correction and a bundled local QR decoder (<code>jsQR</code>/<code>zxing-wasm</code>) — never a hosted decoder, since that would funnel the key through a third party.</li>
+
+      <li><strong>Rate-limiting on pairing attempts is assumed, never specced.</strong> The BIP-39 66-bit entropy is safe only if the token is burned after first use and attempts are rate-limited at the Durable Object. Neither is in the spec.</li>
+
+      <li><strong>Key rotation vs stale sync-key backup.</strong> User exports key to 1Password, rotates key 6 months later → the exported backup is now useless. The rotation flow must force re-export before completing.</li>
+    </ol>
+
+    <h3>3B · CRDT / Yjs semantic problems</h3>
+    <p>These aren't attacks — they're silent data-loss modes from concurrent edits.</p>
+
+    <ol start="8">
+      <li><strong>Same-note concurrent edit silently loses data.</strong> §2.3 says "plain replacement, one wins, history preserves the other." But Y.Map LWW resolves by <code>(clientID, clock)</code>, not wall-clock — and there's no UI surfacing the loser. User edits on phone at 09:00, edits the same note differently on laptop at 09:30, both offline; on sync, the phone version may win because its clientID is higher. Laptop text disappears silently.</li>
+
+      <li><strong>§2.3 and §8 contradict each other.</strong> §2.3 specs body as a Y.Array of plain objects. Decision log §8 item 1 says body is Y.Text. These produce different semantics. Pick one before implementation.</li>
+
+      <li><strong>Y.Array of plain objects produces duplicates on concurrent replace.</strong> Replacing a body via <code>delete(0); insert(0, newBody)</code> on two devices ends up with <em>both</em> bodies in the array (Yjs inserts resolve deterministically but don't dedup). Use Y.Text or a single Y.Map key set, not a Y.Array.</li>
+
+      <li><strong>Delete semantics are undefined.</strong> Delete-vs-concurrent-edit can either resurrect a "deleted" annotation with a fresh body or silently discard the edit. Spec must choose. Recommendation: soft-delete with grace window + UI for resurrect/discard choice.</li>
+
+      <li><strong>Version-migration mutates annotations in place.</strong> When a work ships v2 and device A auto-migrates 100 annotations' selectors, device B (offline on v1) later receives those updates pointing at offsets that don't match B's text. Annotations corrupt on B. Fix: migration creates <em>new</em> annotations linked via <code>migratedFrom</code>; old ones stay untouched.</li>
+
+      <li><strong>Reading-position update rate.</strong> Every few seconds → ~65,000 ops/year/work, each sent over the WebSocket. Huge bandwidth and history-bloat cost for a field that's one timestamp + one position. Either debounce aggressively (~30&nbsp;s), or move reading position out of the Y.Doc into a tiny dedicated LWW endpoint.</li>
+
+      <li><strong>"Relay never parses" contradicts "merged Yjs state."</strong> §4.5 says the relay keeps a compacted merged blob. Compaction via <code>Y.mergeUpdates</code> requires parsing the Yjs framing — and if encryption-at-rest is on, the server can't merge at all. This is an architectural contradiction the spec needs to resolve (probably: with encryption on, only clients compact; server appends until a trusted client uploads a replacement).</li>
+
+      <li><strong>Two-year dormant user loses everything.</strong> Relay prunes rooms at 180 days. iOS may evict IDB. Yjs major version could shift. User loses annotations without warning. Fix: heartbeat from any device keeps room alive; warn user when any paired device has been silent 120 days; require <code>storage.persist()</code> prompt on first annotation.</li>
+    </ol>
+
+    <h3>3C · Platform assumptions that don't hold on iOS</h3>
+    <ul>
+      <li>Installed-PWA URL handler for <code>/pair</code> (<code>handle_links</code>): not supported on iOS Safari.</li>
+      <li>Service worker cache-first matcher doing async IDB lookup: risks races with cold-start navigations on iOS. Preload the downloaded-works keyset into an in-SW <code>Set</code>.</li>
+      <li><code>getUserMedia</code> in standalone-mode PWAs was broken until iOS 17.4.</li>
+      <li><code>StorageManager.estimate()</code> under-counts Cache API on iOS 17.x — quota warnings can lie.</li>
+    </ul>
+  </section>
+
+  <section id="pipeline-bug">
+    <h2><span class="num">Part 7</span>The nastiest finding: a build-pipeline cascade bug</h2>
+
+    <p>This one isn't about sync or volume — it's in the build. I'm flagging it because it's the single most damaging issue found and it hits the foundation Stage 1 sits on.</p>
+
+    <p><strong>The <code>wikiPreviewsUrl</code> field is embedded in every work's <code>manifest.json</code>.</strong> When a single wiki article is edited:</p>
+
+    <ol>
+      <li><code>generate-wiki-previews.py</code> emits a new <code>wiki-previews-v&lt;new-hash&gt;.json</code></li>
+      <li><code>generate-asset-manifests.py</code> writes that URL into every work's <code>manifest.json</code></li>
+      <li>Every work's <code>manifest.json</code> bytes change</li>
+      <li>If <code>manifest.json</code> is included in the work's hashed asset set (and §6.2's <code>walk_files(work_dir)</code> doesn't exclude it), every work gets a new version tag</li>
+      <li>Retention window (current + 2 prior) collapses to "all versions are new" after two wiki edits</li>
+      <li>Every client re-downloads every work on every wiki edit</li>
+    </ol>
+
+    <p>Compounded by the fact that <code>wiki-integration.md</code> §2.2 and <code>tl-pipeline-integration.md</code> §4.3 specify <strong>different shapes</strong> for <code>relatedWiki</code> (one with per-article sha256, one with just slug strings). If the richer shape wins, any wiki article edit directly propagates a new hash into every work's manifest regardless of whether <code>manifest.json</code> is itself in the hash.</p>
+
+    <div class="callout">
+      <strong class="tag">Fix</strong>
+      <p>Exclude <code>manifest.json</code> and all generated cross-references from the work hash input. Compute the work hash over <em>only</em> rendered content files (chapters, CSS, images, TOC). Remove the <code>wikiPreviewsUrl</code> field from per-work manifests — the <code>works.json</code> top-level pointer is already sufficient.</p>
+    </div>
+
+    <p><strong>Also:</strong> <code>git_first_commit_date_for_dir</code> doesn't work on shallow Netlify clones. Netlify defaults to <code>--depth=1</code>. Either force full history, or drop the git dependency and store <code>contentDate</code> in the previous <code>works.json</code> as the authoritative value, only advancing it when the content hash changes.</p>
+  </section>
+
+  <section id="hosting">
+    <h2><span class="num">Part 8</span>Hosting — where does all this run?</h2>
+
+    <p class="lede">Two hosting surfaces matter: the static origin (tolstoy.life — serves works, wiki, manifests, app shell) and the sync relay (wss://sync.tolstoy.life — the tiny Cloudflare Worker that ferries annotation blobs between devices). They have very different profiles and different best-fit providers.</p>
+
+    <h3>The two surfaces</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Surface</th><th>Content</th><th>Shape of load</th><th>Dynamic?</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Static origin</td>
+            <td>HTML, CSS, JS, JSON manifests, wiki-previews bundle, images</td>
+            <td>Bandwidth-heavy, mostly reads, cacheable at edge</td>
+            <td>No — pure static output from Eleventy + Python generators</td>
+          </tr>
+          <tr>
+            <td>Sync relay</td>
+            <td>Opaque Yjs update blobs</td>
+            <td>Long-lived WebSockets, bursty, mostly idle</td>
+            <td>Yes — stateful per-room durable storage</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Static origin — options ranked</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Provider</th><th>1 TB/mo</th><th>10 TB/mo</th><th>Determinism-safe</th><th>Values</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Netlify (incumbent)</td><td>~$19</td><td>~$5,000 legacy</td><td>Yes, with post-processing OFF</td><td>Medium</td></tr>
+          <tr><td>Cloudflare Pages</td><td>$0</td><td>$0</td><td>Yes (default)</td><td>Medium</td></tr>
+          <tr><td>Vercel</td><td>$20</td><td>~$1,370</td><td>No — Image Opt defaults on</td><td>Low</td></tr>
+          <tr><td>GitHub Pages</td><td>over soft limit</td><td>suspended</td><td>Yes</td><td>Medium</td></tr>
+          <tr><td>R2 + CF CDN</td><td>~$0.20</td><td>~$0.20</td><td>Yes</td><td>Medium</td></tr>
+          <tr><td>Bunny.net + storage</td><td>~$5</td><td>~$50</td><td>Yes</td><td>High</td></tr>
+          <tr><td>Hetzner + Caddy (+Bunny)</td><td>~$4–9</td><td>~$4–50</td><td>Yes</td><td>Highest</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>Ruled out:</strong> Vercel (Image Optimization defaults on, which destroys the SHA-256 manifest hashes the PWA relies on — and the $150/TB overage is unworkable for public-domain texts). GitHub Pages (100 GB/month soft limit, no per-path <code>Cache-Control</code>, no <code>Service-Worker-Allowed</code> customisation).</p>
+
+    <p><strong>The most interesting free option:</strong> Cloudflare Pages has <em>unlimited bandwidth</em> on its free tier, no asset auto-transform, and <code>_headers</code> + Workers for dynamic rewrites. At 10 TB/month that's a $5,000/month delta vs. Netlify's legacy pricing. The main downsides are platform dependency (CF is a hyperscaler) and a 25 MB per-file / 20,000-file project limit (currently not a concern; might bite after Phase 5).</p>
+
+    <p><strong>The values-maximalist stack:</strong> Bunny.net edge caching in front of Hetzner + Caddy. Bunny is an independent Slovenian CDN with transparent per-GB pricing (~$5/TB) and no AI ambitions. Hetzner is a German-owned VPS provider. Fully portable; no lock-in on the data (it's files on disk, not in a proprietary system).</p>
+
+    <h3>If you're on a legacy Netlify free plan</h3>
+
+    <p>Netlify changed its pricing model on 4 September 2025. Accounts created before that date are grandfathered indefinitely onto the legacy plan — "no action is required of you" per Netlify's own docs. The practical difference is substantial:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th></th><th>Legacy Free (pre-Sept 2025)</th><th>New credit-based Free</th></tr></thead>
+        <tbody>
+          <tr><td>Bandwidth</td><td><strong>100 GB/month</strong></td><td>15 GB/month (300 credits ÷ 20 credits/GB)</td></tr>
+          <tr><td>Build minutes</td><td>300/month</td><td>bundled into 300 credits</td></tr>
+          <tr><td>Overage on free</td><td>Hard stop (site stops serving)</td><td>Hard stop — can't buy more credits</td></tr>
+          <tr><td>Grandfather end date</td><td>None announced</td><td>n/a</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>A grandfathered legacy free plan has <strong>~6.7× the bandwidth</strong> of a new free plan — a small asset worth preserving. Two rules follow:</p>
+
+    <ul>
+      <li><strong>Don't click any "migrate to new pricing" button</strong> in the Netlify dashboard. The switch is permanent and irreversible per Netlify's docs — a one-way door.</li>
+      <li><strong>Sign up for a Cloudflare Pages account today anyway.</strong> Free, zero commitment. Set up a parallel deploy target from the <code>tolstoylife/website</code> repo — verify the build works and <code>_headers</code> translate cleanly. This turns the eventual migration into a DNS flip, not a project.</li>
+      <li><strong>Set bandwidth alerts at 50 GB and 80 GB/month.</strong> The legacy free plan hard-stops at 100 GB — not a graceful degrade, just a 402.</li>
+    </ul>
+
+    <h3>Build-minute economics</h3>
+
+    <p>Bandwidth is one of two budgets the free plan imposes. The other is <strong>300 build minutes per month</strong>, and it's the sleeper bottleneck — fine today, structurally dangerous by Phase 3 unless you plan for it. A Phase 5 build that takes ten minutes burns 30 builds per month on the free tier. At three deploys a day, that's five times over budget.</p>
+
+    <h4>Where the build time goes</h4>
+
+    <p>An Eleventy + Layer-1 Python build at full scope has four cost centres:</p>
+
+    <ol>
+      <li><strong><code>npm install</code></strong> — 30–60&nbsp;s uncached, 5–10&nbsp;s with Netlify's build cache warm. Essentially free once the cache settles.</li>
+      <li><strong>Eleventy rendering</strong> — scales linearly with page count. Roughly 5&nbsp;ms per page on cold render in Node 20+.</li>
+      <li><strong>Python Layer-1 generators</strong> — <code>generate-wiki-previews.py</code> (cheap), <code>generate-related-wiki.py</code> (parses every chapter for wikilinks), <code>generate-asset-manifests.py</code> (<em>the expensive one — SHA-256 of every served file</em>), <code>generate-works-index.py</code> (cheap).</li>
+      <li><strong>PostCSS / Tailwind</strong> — 5–15&nbsp;s, fixed cost, unaffected by content scale.</li>
+    </ol>
+
+    <h4>Realistic projections</h4>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Phase</th><th>Files</th><th>Cold build</th><th>With caching</th><th>Builds per 300 min</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Phase 2 (now)</strong></td><td>~50</td><td>~25&nbsp;s</td><td>~15&nbsp;s</td><td><strong>≥1,000</strong></td></tr>
+          <tr><td>Phase 3 (TEI ingestion)</td><td>~8,000</td><td>2–3 min</td><td>45–90&nbsp;s</td><td>200–400</td></tr>
+          <tr><td>Phase 5 (full vault)</td><td>~26,500</td><td>8–12 min</td><td>2–4 min</td><td>75–150</td></tr>
+          <tr><td>Phase 5 + facsimile scans</td><td>26,500 + 100k images</td><td>15–25 min</td><td>4–8 min</td><td>40–75</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>"With caching" assumes: npm cache warm, Eleventy's <code>.cache/</code> persisted, and — critically — the SHA-256 generator caches its output keyed by <code>(mtime, size)</code> so unchanged files aren't re-hashed. Without these, Phase 5 builds easily exceed ten minutes and blow through the budget with room to spare.</p>
+
+    <h4>The highest-leverage optimisation: cache file hashes</h4>
+
+    <p>At full scope, the asset-manifest generator will SHA-256 maybe 100,000 served files per build. Hashing 100,000 HTML files (~30&nbsp;KB each) on Netlify's build hardware is on the order of <strong>3–5 minutes of pure CPU</strong> — and almost all of it is redundant, because between two consecutive builds, perhaps 5 files actually changed.</p>
+
+<pre><code># generate-asset-manifests.py — cached-hash pattern
+cache = load_json(".cache/file-hashes.json")  # { path: {mtime, size, sha256} }
+for path in walk_files(build_root):
+    stat = path.stat()
+    cached = cache.get(str(path))
+    if cached and cached["mtime"] == stat.st_mtime and cached["size"] == stat.st_size:
+        sha = cached["sha256"]  # reuse
+    else:
+        sha = sha256(path.read_bytes())
+        cache[str(path)] = {
+            "mtime": stat.st_mtime,
+            "size": stat.st_size,
+            "sha256": sha,
+        }
+save_json(".cache/file-hashes.json", cache)</code></pre>
+
+    <p>With <code>.cache/</code> persisted via Netlify's build cache (configure in <code>netlify.toml</code>), this turns Phase 5 builds from 10+ minutes into 2–3 minutes. <strong>Do this before Phase 3 ingestion starts</strong> — retrofitting is fine, but the determinism CI test I recommended in Part 7 is the natural place to validate that cached-hash output matches from-scratch-hash output byte-for-byte.</p>
+
+    <h4>The second-highest-leverage optimisation: build-ignore</h4>
+
+    <p>Netlify supports a <code>build.ignore</code> command that short-circuits the build if a predicate returns zero. Add to <code>netlify.toml</code>:</p>
+
+<pre><code>[build]
+  ignore = "git diff --quiet HEAD^ HEAD -- website/"</code></pre>
+
+    <p>This skips the build entirely if the last commit didn't touch <code>website/</code>. Root-level doc changes, <code>_generated/</code> updates, tool-project changes — none of them trigger a build. Realistically this alone eliminates 30–50% of builds for an active project.</p>
+
+    <h4>Other optimisations, ranked</h4>
+
+    <ol class="ranked">
+      <li><strong>Eleventy incremental mode.</strong> <code>eleventy --incremental</code> only re-renders changed pages. Works well in dev; in CI the cache has to be persisted for it to help. Non-trivial to wire correctly but worth 40–60% of full-build time at Phase 5.</li>
+      <li><strong>Per-context build commands.</strong> Deploy previews for PRs can skip the Layer-1 pass entirely, using last-good <code>works.json</code> + <code>manifest.json</code> from the main branch. The preview is visually complete; only the PWA offline-download contract is stale. Acceptable for review builds.</li>
+      <li><strong>Split deploys.</strong> If facsimile scans are their own Netlify site (<code>scans.tolstoy.life</code>), they don't factor into the main <code>tolstoy.life</code> build at all. Scan updates deploy independently on their own cadence.</li>
+      <li><strong>Nightly-only full builds via scheduled webhook.</strong> Keep PR / commit builds fast (skip the heavy Layer-1 pass); run a 15-minute full rebuild once a day via a Netlify scheduled build. Trade-off: versioned manifests lag commits by up to 24 hours.</li>
+      <li><strong>Move the whole build to GitHub Actions</strong> and <code>netlify deploy --prod</code> the result. GitHub Actions free tier gives 2,000 min/month for public repos — 6.7× more than Netlify's 300. <code>tolstoylife/website</code> is likely public. Netlify then serves a pre-built directory; it's not running the build itself.</li>
+    </ol>
+
+    <p>Option 5 is the nuclear escape hatch — if Netlify's 300 min becomes structurally inadequate, moving the build to Actions while keeping Netlify as pure hosting preserves the 100 GB legacy bandwidth allowance without the build-minute pressure. A genuinely portable architecture in two places at once.</p>
+
+    <h4>When to act</h4>
+
+    <div class="callout">
+      <strong class="tag">Timeline</strong>
+      <ul>
+        <li><strong>Phase 2 (now):</strong> nothing to do. Current builds are probably 20–30 seconds. Measure a baseline — run <code>time npm run build</code> locally so you have a before/after.</li>
+        <li><strong>Before Phase 3:</strong> implement the SHA-256 hash cache and the <code>build.ignore</code> command. Low-effort, high-leverage. These are the two items that keep you under budget indefinitely.</li>
+        <li><strong>Entering Phase 5:</strong> profile each generator individually. If any single one exceeds 2 minutes consistently, that's the one to optimise.</li>
+        <li><strong>If monthly builds ever sustain &gt; 250 min:</strong> move the build to GitHub Actions. Netlify becomes pure hosting.</li>
+      </ul>
+    </div>
+
+    <h3>Static origin — the minimum-change fix (do this now)</h3>
+
+    <p>Before migrating anything, fix the determinism issue flagged in Part 7 on Netlify itself. Asset Optimization ("post-processing") can be fully disabled without leaving the platform. Add a <code>netlify.toml</code>:</p>
+
+<pre><code>[build]
+  publish = "_site"
+  command = "npm run build"
+
+[build.environment]
+  PYTHON_VERSION = "3.11.9"
+  TZ = "UTC"
+  LC_ALL = "C.UTF-8"
+
+[build.processing]
+  skip_processing = true
+[build.processing.css]
+  bundle = false
+  minify = false
+[build.processing.js]
+  bundle = false
+  minify = false
+[build.processing.html]
+  pretty_urls = false
+[build.processing.images]
+  compress = false</code></pre>
+
+    <p>Then add <code>_headers</code>:</p>
+
+<pre><code>/works.json
+  Cache-Control: public, max-age=300, must-revalidate
+
+/*/manifest.json
+  Cache-Control: public, max-age=300, must-revalidate
+
+/*/v*/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/wiki-previews-v*.json
+  Cache-Control: public, max-age=31536000, immutable
+
+/sw.js
+  Cache-Control: no-cache
+  Service-Worker-Allowed: /</code></pre>
+
+    <p>Re-run the determinism CI (build twice, diff). The audit should now pass.</p>
+
+    <p><strong>Migration trigger:</strong> move to Cloudflare Pages when bandwidth approaches the plan's hard limit — 80&nbsp;GB/month on a legacy free plan (100&nbsp;GB cap), ~500&nbsp;GB/month on a legacy Pro plan, or whenever Netlify's post-September-2025 credit-based pricing would apply to a new account.</p>
+
+    <h3>Sync relay — Cloudflare Workers + Durable Objects</h3>
+
+    <p>The architecture doc picks CF Workers + Durable Objects with hibernatable WebSockets. Research confirms this is the right default. Key correction to the doc's §7: <strong>the "fits in the free tier" claim is aspirational</strong>. Hibernatable WebSockets + DO storage require Workers Paid ($5/month). That's the real floor.</p>
+
+    <p>Cost projections at realistic scale:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Active users</th><th>Peak concurrent</th><th>Monthly relay cost</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>100</td><td>10</td><td>~$5</td><td>Paid plan floor. Everything else within included allowances.</td></tr>
+          <tr><td>1,000</td><td>50</td><td>~$6–$10</td><td>Base + minor DO request cost.</td></tr>
+          <tr><td>10,000</td><td>500</td><td>~$25–$60</td><td>~300M DO requests/mo becomes the dominant line.</td></tr>
+          <tr><td>100,000</td><td>5,000</td><td>~$400–$900</td><td>Scales linearly; still cheap per MAU.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>At every tier above, the sync relay is cheap. The main risks are not cost — they're operational.</p>
+
+    <h3>Combined monthly cost picture</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Scale</th><th>Static origin</th><th>Sync relay</th><th>Combined</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>100 users, ~10 GB/mo</td><td>~$0 (within free tiers on any provider)</td><td>$5</td><td><strong>~$5/mo</strong></td></tr>
+          <tr><td>1K users, ~100 GB/mo</td><td>~$19 Netlify / $0 CF Pages</td><td>~$10</td><td><strong>~$10–$30/mo</strong></td></tr>
+          <tr><td>10K users, ~1 TB/mo</td><td>~$19 / $0</td><td>~$50</td><td><strong>~$50–$70/mo</strong></td></tr>
+          <tr><td>100K users, ~10 TB/mo</td><td>~$5,000 Netlify / $0 CF Pages / $50 Bunny</td><td>~$700</td><td><strong>~$750–$5,700/mo</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>The static-origin bandwidth is the dominant cost driver at scale, not the sync relay. This is why the migration path off Netlify matters even though everything fits comfortably on the free tier today.</p>
+
+    <h3>Operational action items</h3>
+
+    <p>If the project stays on Cloudflare Workers + DO for the sync relay (recommended):</p>
+
+    <ol class="ranked">
+      <li><strong>Upgrade to Workers Paid at launch.</strong> Document the $5/mo floor; update <code>yjs-schema-and-sync.md</code> §7 to replace "fits in the free tier" with concrete figures.</li>
+      <li><strong>Pin the Durable Object location to EU.</strong> On first <code>idFromName()</code> call, pass <code>{ locationHint: "weur" }</code>. Swedish users' blobs stay in Western-European data centres (Amsterdam, Frankfurt, Dublin). Disclose this in the privacy settings panel.</li>
+      <li><strong>Vendor the <code>y-durableobjects</code> implementation.</strong> It's a small-maintainer project. Fork into <code>tolstoylife/y-durableobjects</code>, audit, pin to a reviewed commit. Don't depend on an unmaintained npm tag.</li>
+      <li><strong>Write the Hocuspocus-on-Fly fallback now.</strong> A 50-line Dockerfile + <code>fly.toml</code> committed to the repo (not deployed) operationalises the "operator can be swapped without users noticing" promise. Without it, that promise is aspirational.</li>
+      <li><strong>Nightly R2 backup of DO state.</strong> DO storage is durable but has no external backup. A DO Alarm that exports each active room to R2 (CF's object store, $0.015/GB-month, no egress fees) is cheap insurance — ~$0.30/month at 100K users. It also becomes the migration-off-CF pathway.</li>
+      <li><strong>Measure four metrics from day one:</strong> DO requests/day, P95 cold-start on first connect after idle, snapshot size distribution per room, rooms-flagged-for-pruning count.</li>
+      <li><strong>Abuse protection.</strong> CF WAF rules: rate-limit WebSocket upgrades per-IP to ~10/minute. Reject connections without a well-formed HMAC param inside the Worker (never wakes the DO). Per-room message-rate cap in the DO itself to prevent a malicious device flooding its own room.</li>
+    </ol>
+
+    <h3>LightRAG — the third surface, internal only</h3>
+
+    <p>Beyond the two public-facing surfaces is a third that never touches the public internet: the LightRAG indexing box that runs the nightly semantic-search pipeline (Layer 2 in the scaled architecture — see the project <code>CLAUDE.md</code>). It's a developer tool, not user-facing. Every design decision should fall out of that fact.</p>
+
+    <p>LightRAG has two computational phases:</p>
+
+    <ol>
+      <li><strong>Embedding generation</strong> — small model (e.g. <code>nomic-embed-text</code>, ~275&nbsp;MB). CPU-fast. Cheap.</li>
+      <li><strong>LLM extraction</strong> — entity, relationship, and summary extraction via Qwen2.5:7b or similar. This is where most of the compute goes.</li>
+    </ol>
+
+    <p>Plus graph and vector storage (NetworkX + NanoVectorDB), which are tiny and purely disk-bound.</p>
+
+    <p>The real question is whether a VPS can run Qwen2.5:7b efficiently enough. The answer splits into two regimes.</p>
+
+    <h4>CPU-only — Hetzner standard VPS</h4>
+
+    <p>Qwen2.5:7b at Q4_K_M quantisation needs ~5–6&nbsp;GB RAM to run, ~8–12&nbsp;GB with a 32K context. Throughput on modern Xeon / EPYC cores is 5–15 tokens per second.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Hetzner tier</th><th>~€/mo</th><th>Spec</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td>CX22</td><td>€3.79</td><td>2 vCPU, 4 GB</td><td>Too small — can't even load the model</td></tr>
+          <tr><td>CX32</td><td>€7</td><td>4 vCPU, 8 GB</td><td>Borderline — only with aggressive context trimming</td></tr>
+          <tr><td><strong>CCX33</strong></td><td><strong>~€24</strong></td><td><strong>8 dedicated vCPU, 32 GB</strong></td><td><strong>Sweet spot for ongoing sync</strong></td></tr>
+          <tr><td>CCX43</td><td>~€49</td><td>16 dedicated vCPU, 64 GB</td><td>Faster but unnecessary for nightly incremental</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>CCX33 handles the nightly incremental easily. After initial ingestion, you're looking at perhaps 10–100 changed files per day in steady state — minutes of work at 10 tokens/second.</p>
+
+    <p><strong>The catch is the initial full ingestion.</strong> 26,500 files × multiple LLM calls per chunk can mean a week of continuous compute on a CPU-only box. Doable if you're patient, annoying if you're not.</p>
+
+    <h4>The GPU shortcut</h4>
+
+    <p>Hetzner added dedicated GPU servers in 2024. <strong>GEX44</strong> with an RTX 4000 SFF Ada (20&nbsp;GB VRAM) at ~€184/month makes Qwen2.5:7b run at 40+ tokens per second — initial ingestion shrinks from a week to hours. Overkill for ongoing incremental sync, though.</p>
+
+    <p><strong>Better split:</strong> do the initial ingestion on a rented-by-the-hour GPU (<strong>RunPod</strong> or <strong>Vast.ai</strong> — roughly $0.30–$0.60/hour for an A5000 or RTX 4090), then move the resulting index to the CPU VPS for ongoing incremental work. One-time cost: ~$20–$50. Ongoing cost: €24/month.</p>
+
+    <h4>Recommended setup</h4>
+
+    <ol class="ranked">
+      <li><strong>Keep local dev primary.</strong> An Apple Silicon Mac runs Ollama via Metal at 40+ tokens/sec — essentially free, no monthly cost. Use it for development and test ingestions.</li>
+      <li><strong>Rent a GPU by the hour once</strong> for the first full Tolstoy ingestion (~$30 on RunPod). Save the resulting <code>lightrag/data/</code> directory.</li>
+      <li><strong>Hetzner CCX33 (~€24/month)</strong> hosts the nightly sync and the HTTP query API (port 8420). Reach it via Tailscale or WireGuard — never expose the query API publicly.</li>
+      <li><strong>Back up <code>lightrag/data/</code></strong> to Hetzner Storage Box or Cloudflare R2 weekly. The index is regenerable from the vault, but a fresh regen costs hours, so keeping the artefact is worth the near-zero storage cost.</li>
+    </ol>
+
+    <h4>The critical separation</h4>
+
+    <div class="callout">
+      <strong class="tag">Three boxes, not one</strong>
+      <p>LightRAG's query API on port 8420 must <em>never</em> be the same machine as the static-site origin or the sync relay. Keep the three surfaces cleanly separated: <code>tolstoy.life</code> static origin (Netlify → CF Pages), <code>sync.tolstoy.life</code> Yjs relay (CF Workers + DO), <em>internal-only</em> LightRAG box (Hetzner CCX33, not publicly routed, Tailscale access only).</p>
+    </div>
+
+    <p>LightRAG holds the whole extraction-pipeline state — the knowledge graph, the vector index, the raw LLM-extracted entities. It's a developer tool that happens to be an HTTP service. Keeping it off the public internet is cheaper (no CDN, no TLS concerns, no WAF rules), safer (no attack surface), and matches how it's actually used: by Claude sessions during ingestion and lint, not by readers.</p>
+
+    <h3>A note on sovereignty and lock-in</h3>
+
+    <p>The project's stated values include independence from platform gatekeepers. Hosting is the place this value is actually tested. Worth being honest:</p>
+
+    <ul>
+      <li><strong>Netlify and Cloudflare are both US-headquartered platforms.</strong> Neither is "independent" in the Tolstoy sense. They are, however, good technical fits, and the lock-in risk is bounded because the static content is plain files in a git repo — migration is a build-and-push, not a data export.</li>
+      <li><strong>The sync relay has higher lock-in.</strong> CF Durable Objects has a proprietary API. The <em>protocol</em> (Yjs wire) is portable, so swapping operators means rewriting ~200 lines of TypeScript, not migrating user data. The Hocuspocus fallback makes this concrete.</li>
+      <li><strong>True independence</strong> is Bunny.net + Hetzner (static) and Hocuspocus on Hetzner (relay). Doable. Costs more ops time. A reasonable Phase 5+ goal; not a reasonable Stage-1 blocker.</li>
+    </ul>
+
+    <h3>The Cloudflare consolidation arc</h3>
+
+    <p>Having committed to Cloudflare for the domain, the sync relay, and R2 backups, the question of whether the static origin should also move is half-decided. The direction is clear; the open questions are <em>when</em> and <em>how</em>, not <em>whether</em>.</p>
+
+    <h4>The two-phase architectural evolution</h4>
+
+    <p>Cloudflare Pages is ideal for the project <em>today</em>. It is not sufficient at <em>Phase 5 scale</em>. The difference isn't bandwidth — it's a per-deployment file cap.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Phase</th><th>Files</th><th>CF Pages alone?</th><th>Required architecture</th></tr></thead>
+        <tbody>
+          <tr><td>Phase 2 (now)</td><td>~50</td><td>Yes</td><td>CF Pages — simple</td></tr>
+          <tr><td>Phase 3 (TEI ingestion)</td><td>~8,000</td><td>Yes</td><td>CF Pages — under 20k cap</td></tr>
+          <tr><td>Phase 4 (wiki expansion)</td><td>~15,000</td><td>Yes, barely</td><td>CF Pages — approaching cap</td></tr>
+          <tr><td><strong>Phase 5 (full vault)</strong></td><td><strong>&gt;100,000</strong></td><td><strong>No — exceeds 20k cap</strong></td><td><strong>CF Pages (shell) + R2 (content) via Workers</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Cloudflare Pages caps each deployment at <strong>20,000 files and 25 MB per file</strong>. At Phase 5 the Tolstoy vault projects to 26,500 wiki articles, ~500 translated works with many chapters each, ~10,000 letters, and ~90 Jubilee volumes. The total easily exceeds 100,000 files — <strong>five times Pages' limit</strong>.</p>
+
+    <h4>The native Cloudflare answer: Pages + R2</h4>
+
+    <p>The ranked options table earlier in this section listed R2 + Cloudflare CDN as the "best pure economics at 10+ TB/month" option. At Phase 5 it <em>also</em> becomes the answer to the file-count problem. The split:</p>
+
+    <ul>
+      <li><strong>CF Pages</strong> serves the app shell, CSS, JavaScript, the <code>wiki-previews</code> bundle, <code>works.json</code>, the per-work <code>manifest.json</code> files, and any small fixed assets. A few hundred files — comfortably under the 20k cap.</li>
+      <li><strong>R2</strong> holds the long tail — every chapter file, every wiki article, every letter, every versioned subtree. No file-count limit. Egress-free when served through Cloudflare's CDN.</li>
+      <li><strong>A small Worker (~50 lines)</strong> routes requests by path: <code>/wiki/*</code> → R2 bucket, <code>/works/*/text/*</code> → R2 bucket, everything else → Pages origin. Sets <code>Cache-Control</code> per path. Optionally verifies the requested SHA-256 against the manifest as an integrity check.</li>
+    </ul>
+
+    <p>Both deployments stay in the same Cloudflare account. Same dashboard, same billing, same DNS. The <code>manifest.json</code> contract from Part 7 doesn't care where the bytes physically live — the manifest's <code>url</code> field is the origin-relative path, and the Worker resolves it.</p>
+
+    <h4>Staged migration, no big bang</h4>
+
+    <p>The parallel CF Pages account you already set up is the right first step. The rest, at your pace:</p>
+
+    <ol class="ranked">
+      <li><strong>Transfer the domain to Cloudflare Registrar</strong> at the next Netlify renewal. Saves ~$22/year and centralises DNS management.</li>
+      <li><strong>Connect <code>tolstoylife/website</code> to CF Pages</strong> as a second deploy target for the <code>main</code> branch. Builds produce a <code>pages.dev</code> URL alongside the Netlify deploy. Zero user-facing change yet.</li>
+      <li><strong>Run the cross-platform determinism test:</strong> build the same git commit on both Netlify and CF Pages, diff the output directories. They must be byte-identical. If they're not, you've found a bug in either provider's build pipeline before it costs anything. This extends the single-platform determinism CI test from Part 7 into a cross-platform reproducibility test.</li>
+      <li><strong>Flip DNS when satisfied.</strong> The A and CNAME records for <code>tolstoy.life</code> point to CF Pages instead of Netlify. Rollback is the same DNS change in reverse — seconds of propagation.</li>
+      <li><strong>Keep Netlify deploying silently as a standby</strong> for 6–12 months. Don't formally cancel. If Cloudflare ever has an issue, flip DNS back. The grandfathered 100 GB bandwidth remains a passive hedge. Costs nothing — Netlify free stays free as long as builds stay under 300 min/month.</li>
+      <li><strong>Budget for the R2 split as a Phase 5 milestone.</strong> When the file count approaches 15,000 (an alarm, not a cliff), implement the Pages-shell + R2-content split. The Worker router is about a week of work; the Eleventy build-config change to output the split is smaller than it sounds.</li>
+    </ol>
+
+    <h4>Concentration without lock-in</h4>
+
+    <p>This consolidates significant infrastructure at one US hyperscaler. The project's stated value is "not dependent on big data companies." Cloudflare <em>is</em> a big data company. The mitigation — and it's a real one — is that every piece of the data remains portable:</p>
+
+    <ul>
+      <li><strong>R2</strong> is S3-compatible. A single <code>rclone sync</code> moves content to any other object store.</li>
+      <li><strong>The sync relay protocol</strong> is standard Yjs. Swapping CF Workers for Hocuspocus-on-Hetzner is the ~200-line rewrite already documented as a fallback earlier in this part.</li>
+      <li><strong>The static build output</strong> is just files in a git repo — deployable anywhere in minutes.</li>
+      <li><strong>The domain</strong> transfers out in 5 days if Cloudflare Registrar's posture ever changes.</li>
+    </ul>
+
+    <p><strong>Concentration without lock-in</strong> is the honest phrase for this stack. Every piece is portable; the consolidation is operational convenience, not architectural dependency. The Bunny.net + Hetzner stack remains the sovereignty option if the politics ever change — and the migration path above makes arriving there <em>simpler</em> from Cloudflare than from Netlify, because R2 exports cleanly to Bunny Storage and Worker logic ports cleanly to Caddy configuration.</p>
+
+    <h3>Recommendation</h3>
+
+    <div class="callout">
+      <strong class="tag">For now</strong>
+      <p>Keep Netlify running with post-processing disabled (the <code>netlify.toml</code> above) while setting up CF Pages as a parallel deploy target. Transfer the domain to Cloudflare Registrar at next renewal. Use Cloudflare Workers + DO for the sync relay, paid tier from day one. Pin the DO to EU. Write the Hocuspocus fallback. Back up to R2 nightly.</p>
+    </div>
+
+    <div class="callout">
+      <strong class="tag">When the DNS flip becomes urgent</strong>
+      <p>The Netlify → CF Pages transition is planned regardless. It becomes <em>urgent</em> when bandwidth approaches Netlify's 100 GB/month hard cap (alerts at 50 and 80 GB) or when monthly build minutes sustain above 250 of the 300 budget. Until either fires, the parallel CF Pages deploy serves as validation — the DNS flip can happen whenever you're ready.</p>
+    </div>
+
+    <div class="callout">
+      <strong class="tag">The sovereignty option</strong>
+      <p>If the project later wants full platform independence, the destination is Bunny.net + Hetzner for the origin and Hocuspocus on Hetzner (or a trusted EU VPS) for the relay. Same bytes, same protocols, different operators. Plan for it; don't rush to it.</p>
+    </div>
+  </section>
+
+  <section id="priority-fixes">
+    <h2><span class="num">Part 9</span>Priority fixes, ranked</h2>
+
+    <h3>Before Stage 1 ships</h3>
+    <ol class="ranked">
+      <li><strong>Fix the wiki-previews/manifest cascade.</strong> Exclude cross-references from the work hash. <em>(Pipeline determinism)</em></li>
+      <li><strong>Reconcile §2.3 vs decision log §8 for annotation body.</strong> One shape, one concurrency story. <em>(Data integrity)</em></li>
+      <li><strong>Publish a deterministic-build CI test.</strong> Build twice, diff. Block merges. <em>(Pipeline correctness)</em></li>
+      <li><strong>Add <code>chapterUri</code> validator + one-shot migration.</strong> Uniqueness check across corpus. <em>(Annotation anchoring)</em></li>
+      <li><strong>Pick a canonical JSON library</strong> (rfc8785) and NFC-normalize strings. <em>(Determinism)</em></li>
+    </ol>
+
+    <h3>Before Stage 4 ships</h3>
+    <ol class="ranked" start="6">
+      <li><strong>HKDF key separation</strong> for HMAC / AEAD / export keys. <em>(Cryptographic hygiene)</em></li>
+      <li><strong>SAS confirmation handshake</strong> replacing yes/no pairing confirm. <em>(Real MITM protection)</em></li>
+      <li><strong>Device-registration authorization</strong> (existing device must sign new-device registration). <em>(Fix the revocation-is-placebo bug)</em></li>
+      <li><strong>Rotation flow blocks on re-export</strong> with stale-backup banner. <em>(Prevent user data loss after positive security action)</em></li>
+      <li><strong>Rate-limit pairing attempts</strong> at the Durable Object, one-use BIP-39 tokens. <em>(Brute-force defense)</em></li>
+      <li><strong>Resolve the "relay doesn't parse" contradiction.</strong> Either spec client-side compaction under encryption, or weaken the claim. <em>(Architectural honesty)</em></li>
+      <li><strong>BIP-39 as iOS primary</strong>, not fallback; bundle local QR decoder. <em>(Platform correctness)</em></li>
+      <li><strong>iCloud Tabs mitigation</strong> — <code>history.replaceState</code> on <code>/pair</code>, <code>Referrer-Policy: no-referrer</code>. <em>(Fragment leak)</em></li>
+      <li><strong>Dormant-user heartbeat</strong> — keep room alive if any paired device is active. <em>(2-year lifecycle)</em></li>
+    </ol>
+
+    <h3>Broader</h3>
+    <ol class="ranked" start="15">
+      <li><strong>Split <code>works.json</code> by type</strong> once letters are indexed. <em>(Volume)</em></li>
+      <li><strong>Auto-prune stale work-version caches</strong> with annotation-reference reachability. <em>(Storage leak)</em></li>
+      <li><strong>Lazy-load the wiki-previews bundle</strong> from day one. <em>(Shell install cost)</em></li>
+      <li><strong>Move reading-position out of Yjs</strong> or throttle it to ~30&nbsp;s. <em>(Bandwidth + bloat)</em></li>
+      <li><strong>Version-migration creates new annotations</strong>, doesn't mutate old ones. <em>(Multi-device correctness)</em></li>
+    </ol>
+  </section>
+
+  <section id="verdict">
+    <h2><span class="num">Part 10</span>Overall verdict</h2>
+
+    <p>The architecture is <strong>fundamentally sound</strong> — the design instincts (opaque-blob relay, no accounts, content-addressed versioning, W3C annotations, public-domain-aligned values) are all correct. The docs are unusually honest about their own threat model (the §4.3.1 cryptography callout is exemplary).</p>
+
+    <p>The weaknesses are <strong>specification-gap failures</strong>, not architectural rot. A two-page "sync security spec" locking down HKDF labels, SAS protocol, rate-limit numbers, device-registration authorization, and rotation-export atomicity would close most of the sync risks. A week of pipeline hardening (excluding cross-references from hashes, the determinism CI test, a canonical JSON encoder) would close most of the build risks.</p>
+
+    <p>Volume is manageable for the realistic user. Sync is workable with the fixes above. The project can ship.</p>
+
+    <blockquote>
+      <p>The single most important thing is to treat the PWA docs as drafts that assume a happy path, and run the priority-fix list before implementation begins. Every issue in this report is findable only because the docs are thorough enough to have specified the details — which is the opposite of the usual problem.</p>
+    </blockquote>
+  </section>
+
+</main>
+
+<footer>
+  <p>Synthesized from five parallel investigations: volume &amp; storage, QR pairing threat model, CRDT/Yjs scaling, iOS Safari edge cases, build pipeline determinism.</p>
+</footer>
+
+</body>
+</html>

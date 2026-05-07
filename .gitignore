@@ -4,10 +4,10 @@ dist/
 # generated types
 .astro/
 
-# synced docs (populated by scripts/sync-docs.sh at build time)
-src/content/docs/
-src/data/docs-index.html
-public/docs/
+# synced docs — committed to repo, regenerate with: npm run sync-docs
+# src/content/docs/
+# src/data/docs-index.html
+# public/docs/
 
 # dependencies
 node_modules/
